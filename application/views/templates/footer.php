@@ -42,7 +42,15 @@
           title: '<?=$title?>',
           filename: '<?=$filename?>',
           exportOptions: {
-            columns: ':not(:last-child)' // semua kolom kecuali kolom terakhir
+            columns: ':not(:last-child)'
+          },
+          customize: function (xlsx) {
+            var sheet = xlsx.xl.worksheets['sheet1.xml'];
+
+            // set lebar tiap kolom
+            $('col', sheet).each(function() {
+              $(this).attr('width', 20); // sesuaikan angka untuk lebar
+            });
           }
         },
         {
@@ -51,6 +59,17 @@
           filename: '<?=$filename?>',
           exportOptions: {
             columns: ':not(:last-child)'
+          },
+          customize: function (doc) {
+            doc.styles.tableHeader.alignment = 'center';
+            doc.styles.tableHeader.fillColor = '#d3d3d3';
+            
+            // beri padding pada seluruh sel
+            doc.content[1].table.body.forEach(function(row) {
+              row.forEach(function(cell) {
+                cell.margin = [5, 5, 5, 2]; // kiri, atas, kanan, bawah
+              });
+            });
           }
         },
         {
@@ -58,6 +77,16 @@
           title: '<?=$title?>',
           exportOptions: {
             columns: ':not(:last-child)'
+          },
+          customize: function (win) {
+            $(win.document.body).find('table').css({
+              'border-collapse': 'collapse',
+              'width': '100%'
+            });
+            $(win.document.body).find('th, td').css({
+              'padding': '8px',  // jarak antar kolom
+              'border': '1px solid #ccc'
+            });
           }
         },
         {
@@ -65,7 +94,6 @@
           className: 'btn btn-danger',
           action: function (e, dt, node, config) {
             let selected = [];
-            // ambil semua checkbox tercentang di tabel
             dt.rows().nodes().to$().find('.checkItem:checked').each(function() {
               selected.push($(this).val());
             });
@@ -76,36 +104,26 @@
             }
 
             if (confirm('Hapus data yang terpilih?')) {
-              // buat form dinamis untuk kirim POST
               let form = $('<form>', {
                 method: 'POST',
-                action: '<?= site_url("populasi/delete_multiple") ?>'
+                action: '<?= site_url($this->uri->segment(1) . "/delete_multiple") ?>'
               });
 
               selected.forEach(function(id) {
                 form.append($('<input>', {
                   type: 'hidden',
-                  name: 'id_populasi[]',
+                  name: 'id_<?=$this->uri->segment(1)?>[]',
                   value: id
                 }));
               });
 
               $('body').append(form);
-              form.submit(); // reload halaman otomatis setelah hapus
+              form.submit();
             }
           }
         }
       ]
     }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
-    $('#example2').DataTable({
-      "paging": true,
-      "lengthChange": false,
-      "searching": false,
-      "ordering": true,
-      "info": true,
-      "autoWidth": false,
-      "responsive": true,
-    });
   });
 
   $('.btnEditProduksi').on('click', function () {
@@ -117,56 +135,6 @@
     $('#edit_user').val($(this).data('user')).trigger('change');
     $('#edit_jenis').val($(this).data('jenis')).trigger('change'); // 🔹 jenis
   });
-
-  $('.btnEditPopulasi').on('click', function () {
-    var id         = $(this).data('id');
-    var bulan      = $(this).data('bulan');
-    var tahun      = $(this).data('tahun');
-    var wilayah    = $(this).data('wilayah'); // kecamatan
-    var komoditas  = $(this).data('komoditas');
-    var jumlah     = $(this).data('jumlah');
-    var desa       = $(this).data('kode_desa');    // tambahkan data-desa di tombol edit
-
-    // Isi nilai input
-    $('#edit_id').val(id);
-    $('#edit_bulan').val(bulan);
-    $('#edit_tahun').val(tahun);
-    $('#edit_wilayah').val(wilayah);
-    $('#edit_komoditas').val(komoditas);
-    $('#edit_jumlah').val(jumlah);
-
-    // Kosongkan dropdown desa dulu
-    $('#edit_desa').html('<option value="">-- Pilih Desa --</option>');
-    if (wilayah) {
-      $.ajax({
-        url: '<?= base_url("populasi/getDesaByKecamatan") ?>',
-        type: 'POST',
-        data: { kode: wilayah },
-        dataType: 'json',
-        success: function(response) {
-          if (response && response.length > 0) {
-            $.each(response, function(index, item) {
-              console.log(desa);
-              console.log(item);
-              let selected = (item.kode_desa == desa) ? 'selected' : '';
-              $('#edit_desa').append(
-                `<option value="${item.kode_desa}" ${selected}>${item.nama_desa}</option>`
-              );
-            });
-          } else {
-            $('#edit_desa').append('<option value="">Tidak ada desa</option>');
-          }
-        },
-        error: function() {
-          alert('Gagal mengambil data desa.');
-        }
-      });
-    }
-
-    // Tampilkan modal edit
-    $('#modalEdit').modal('show');
-  });
-
 
   $('.btnEditPemotongan').on('click', function () {
     $('#edit_id').val($(this).data('id'));
@@ -186,7 +154,7 @@
 
     if (codeKecamatan) {
       $.ajax({
-        url: "<?= site_url('populasi/get_desa_by_kecamatan') ?>/" + codeKecamatan,
+        url: "<?= site_url($this->uri->segment(1) .'/get_desa_by_kecamatan') ?>/" + codeKecamatan,
         type: "GET",
         dataType: "json",
         success: function(res) {

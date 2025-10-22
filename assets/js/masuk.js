@@ -16,12 +16,12 @@ document.getElementById('deleteSelected').addEventListener('click', function() {
     if(confirm('Hapus data yang terpilih?')){
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = '<?= site_url("populasi/delete_multiple") ?>';
+    form.action = '<?= site_url("masuk/delete_multiple") ?>';
 
     selected.forEach(id => {
         const input = document.createElement('input');
         input.type = 'hidden';
-        input.name = 'id_populasi[]';
+        input.name = 'id_masuk[]';
         input.value = id;
         form.appendChild(input);
     });
@@ -31,7 +31,7 @@ document.getElementById('deleteSelected').addEventListener('click', function() {
     }
 });
 
-$('.btnEditPopulasi').on('click', function () {
+$('.btnEditMasuk').on('click', function () {
     var id         = $(this).data('id');
     var bulan      = $(this).data('bulan');
     var tahun      = $(this).data('tahun');
@@ -52,7 +52,7 @@ $('.btnEditPopulasi').on('click', function () {
     $('#edit_desa').html('<option value="">-- Pilih Desa --</option>');
     if (wilayah) {
       $.ajax({
-        url: '<?= base_url("populasi/getDesaByKecamatan") ?>',
+        url: '<?= base_url("masuk/getDesaByKecamatan") ?>',
         type: 'POST',
         data: { kode: wilayah },
         dataType: 'json',
