@@ -31,6 +31,13 @@
             <p>Rekap Data</p>
           </a>
         </li>
+        <li class="nav-item">
+          <a href="<?= base_url('kecamatan') ?>" 
+            class="nav-link <?= ($this->uri->segment(1) == 'kecamatan') ? 'active' : '' ?>">
+            <i class="nav-icon fas fa-database"></i>
+            <p>Rekap Kecamatan</p>
+          </a>
+        </li>
 
         <li class="nav-header">MASTER DATA</li>
 

@@ -231,71 +231,76 @@ class Populasi extends CI_Controller {
 
         require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
 
-        $objPHPExcel = new PHPExcel();
+        // Load file Excel
         $objPHPExcel = PHPExcel_IOFactory::load($file);
-        $sheet = $objPHPExcel->getActiveSheet()->toArray(null,true,true,true);
+        $sheet = $objPHPExcel->getActiveSheet()->toArray(null, true, true, true);
 
+        // Ambil data master
         $komoditas = $this->Komoditas_model->getKomoditasIndexed(); // nama => id
         if ($this->session->userdata('jabatan') == 'Admin Kecamatan') {
-            $wilayah = $this->Komoditas_model->getDesaIndexed();
+            $wilayah_master = $this->Komoditas_model->getDesaIndexed(); // nama => id
         } else {
-            $wilayah = $this->Komoditas_model->getKecamatanIndexed();   // nama => id
+            $wilayah_master = $this->Komoditas_model->getKecamatanIndexed(); // nama => id
         }
-        
-        $headers = $sheet[1];
-        $jkel = $sheet[2];
-        $umur = $sheet[3];
-        unset($sheet[1]);
-        unset($sheet[2]);
-        unset($sheet[3]);
-        
-        foreach ($sheet as $row) {
 
-            $nama_wilayah = $row['A'];
+        // Ambil header
+        $headers = $sheet[1]; // nama komoditas
+        $jkel    = $sheet[2]; // jenis kelamin
+        $umur    = $sheet[3]; // umur
+
+        // Ambil data mulai baris ke-4, reindex array
+        $sheet_data = array_slice($sheet, 3);
+
+        foreach ($sheet_data as $row) {
+            $nama_wilayah = trim($row['A']);
             if (empty($nama_wilayah)) continue;
 
-            $id_wilayah = $wilayah[$nama_wilayah] ?? null;
+            $id_wilayah = $wilayah_master[$nama_wilayah] ?? null;
             if (!$id_wilayah) continue;
 
             foreach ($headers as $col => $komod) {
-
                 if ($col == 'A') continue;
+
                 $id_komoditas = $komoditas[$komod] ?? null;
-                
-                if ($col == 'B' || $col == 'C' || $col == 'D' || $col == 'E' || $col == 'F' || $col == 'G') {
+                $jenis_kelamin = null;
+                $umur_value = null;
+
+                // logika kolom khusus
+                if (in_array($col, ['B','C','D','E','F','G'])) {
                     $id_komoditas = $komoditas['Sapi Potong'] ?? null;
                     $jenis_kelamin = ($col <= 'D') ? 'Jantan' : 'Betina';
-                    $umur_value    = $umur[$col];
-                } elseif ($col == 'H' || $col == 'I' || $col == 'J') {
+                    $umur_value    = $umur[$col] ?? null;
+                } elseif (in_array($col, ['H','I','J'])) {
                     $id_komoditas = $komoditas['Sapi Perah'] ?? null;
                     $jenis_kelamin = 'Betina';
-                    $umur_value    = $umur[$col];
-                } elseif ($col == 'K' || $col == 'L') {
+                    $umur_value    = $umur[$col] ?? null;
+                } elseif (in_array($col, ['K','L'])) {
                     $id_komoditas = $komoditas['Kerbau'] ?? null;
-                    $jenis_kelamin = $jkel[$col];
-                    $umur_value    = null;
-                } elseif ($col == 'M' || $col == 'N') {
+                    $jenis_kelamin = $jkel[$col] ?? null;
+                } elseif (in_array($col, ['M','N'])) {
                     $id_komoditas = $komoditas['Kuda'] ?? null;
-                    $jenis_kelamin = $jkel[$col];
-                    $umur_value    = null;
-                } else {
-                    $id_komoditas = $komoditas[$komod] ?? null;
-                    $jenis_kelamin = null;
-                    $umur_value    = null;
+                    $jenis_kelamin = $jkel[$col] ?? null;
                 }
 
                 if (!$id_komoditas) continue;
 
+                // Logika Admin Kecamatan vs Admin Pusat
                 if ($this->session->userdata('jabatan') == 'Admin Kecamatan') {
-                    $kecamatan = $this->db->get_where('master_wilayah', ['kode' => $this->session->userdata('kode')])->row();
+                    $kecamatan = $this->db->get_where('master_wilayah', [
+                        'kode' => $this->session->userdata('kode')
+                    ])->row();
                     $wilayah = $kecamatan->id_wilayah;
-                    $kode = $id_wilayah;
+                    $kode    = $id_wilayah; // kode desa
                 } else {
                     $wilayah = $id_wilayah;
-                    $kode = NULL;
+                    $kode    = null;
                 }
 
-                $jumlah = (int) preg_replace('/[^\d]/', '', $row[$col]);
+                // Ambil jumlah
+                $jumlah = isset($row[$col]) ? (int) preg_replace('/[^\d]/', '', $row[$col]) : 0;
+                if ($jumlah <= 0) continue;
+
+                // Siapkan data untuk insert
                 $data_insert = [
                     'bulan'         => $bulan,
                     'tahun'         => $tahun,
@@ -307,15 +312,12 @@ class Populasi extends CI_Controller {
                     'kode_desa'     => $kode,
                     'umur'          => $umur_value,
                 ];
-                // Simpan ke database
                 $this->Populasi_model->insert($data_insert);
             }
         }
-
-        
-
         redirect('populasi');
     }
+
 
     public function delete_multiple()
     {
