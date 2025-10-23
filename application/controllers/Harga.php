@@ -15,6 +15,7 @@ class Harga extends CI_Controller {
     {
         $data['harga'] = $this->Harga_model->get_all();
         $data['title'] = "Data Komoditas";
+        $data['js'] = 'harga.js';
         $data['filename'] = "data_komoditas";
         $this->load->view('templates/header');
         $this->load->view('templates/navbar');
@@ -166,4 +167,93 @@ class Harga extends CI_Controller {
         $writer->save('php://output');
     }
 
+    public function delete_multiple()
+    {
+        $ids = $this->input->post('id_harga');
+        if($ids) {
+            $this->db->where_in('id_harga', $ids);
+            $this->db->delete('trx_harga');
+        }
+        redirect('harga');
+    }
+
+   public function generate() {
+    // 1️⃣ Ambil semua tanggal unik dari tabel harga
+        $dates = $this->db->select('DISTINCT(tanggal) as tgl')->order_by('tanggal', 'ASC')->get('trx_harga')->result_array();
+
+        // 2️⃣ Mapping ID komoditas ke nama
+        $komoditas = [
+            7  => 'SAPI',
+            8  => 'DAGING SAPI',
+            9  => 'AYAM BROILER',
+            10 => 'KARKAS AYAM BROILER',
+            11 => 'TELUR AYAM RAS (P)',
+            12 => 'TELUR AYAM RAS (K)'
+        ];
+
+        // 3️⃣ Lokasi file template PNG & font OTF
+        $template_path = FCPATH . 'assets/img/template.png';
+        $font_path     = FCPATH . 'assets/font/Garet-Book.otf'; 
+        $font_tgl      = FCPATH . 'assets/font/radley.ttf'; 
+
+        if (!file_exists($template_path)) {
+            show_error('File template tidak ditemukan di: ' . $template_path);
+        }
+
+        if (!file_exists($font_path)) {
+            show_error('File font tidak ditemukan di: ' . $font_path);
+        }
+
+        $upload_path = FCPATH . 'uploads/';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0777, true);
+        }
+
+        $positions = [500, 610, 720, 830, 940, 1050]; // posisi Y tiap baris harga
+
+        foreach ($dates as $dateRow) {
+            $tanggal = $dateRow['tgl'];
+
+            // 4️⃣ Ambil semua harga untuk tanggal ini
+            $result = $this->db->select('id_komoditas, harga')
+                            ->where('tanggal', $tanggal)
+                            ->get('trx_harga')
+                            ->result_array();
+
+            // 5️⃣ Buka template PNG
+            $image = imagecreatefrompng($template_path);
+
+            // 6️⃣ Siapkan warna teks (hitam)
+            $black = imagecolorallocate($image, 0, 0, 0);
+
+            // 7️⃣ Tambahkan teks tanggal update
+            $tanggal_text = 'Update Data : ' . date('j F Y', strtotime($tanggal));
+            imagettftext($image, 30, 0, 260, 378, $black, $font_tgl, $tanggal_text);
+
+            // 8️⃣ Tulis harga ke gambar
+            $i = 0;
+            foreach ($result as $row) {
+                $harga = 'Rp. ' . number_format($row['harga'], 0, ',', '.');
+                if (isset($positions[$i])) {
+                    imagettftext($image, 30, 0, 690, $positions[$i], $black, $font_path, $harga);
+                }
+                $i++;
+            }
+
+            // 9️⃣ Buat nama file
+            $filename = 'harga-' . date('Y-m-d', strtotime($tanggal)) . '.jpg';
+            $fullpath = $upload_path . $filename;
+
+            // 10️⃣ Hapus file lama jika ada
+            if (file_exists($fullpath)) {
+                unlink($fullpath);
+            }
+
+            // 11️⃣ Simpan gambar
+            imagejpeg($image, $fullpath, 100);
+            imagedestroy($image);
+
+            echo '<p>✅ Gambar untuk tanggal ' . $tanggal . ' berhasil dibuat! <a href="' . base_url('uploads/' . $filename) . '" target="_blank">Lihat</a></p>';
+        }
+    }
 }

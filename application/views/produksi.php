@@ -17,6 +17,12 @@
           <table id="example1" class="table table-bordered table-striped">
             <thead>
               <tr>
+                <th style="width: 5%; text-align: center;">
+                  <div class="custom-checkbox">
+                    <input type="checkbox" id="checkAll">
+                    <label for="checkAll"></label>
+                  </div>
+                </th>
                 <th>Bulan Tahun</th>
                 <th>Komoditas</th>
                 <th>Hasil Produksi</th>
@@ -27,6 +33,12 @@
             <tbody>
               <?php foreach($produksi as $p): ?>
               <tr>
+                <td style="text-align: center;">
+                  <div class="custom-checkbox">
+                    <input type="checkbox" class="checkItem" id="cb<?= $p->id_produksi ?>" value="<?= $p->id_produksi ?>">
+                    <label for="cb<?= $p->id_produksi ?>"></label>
+                  </div>
+                </td>
                 <td><?= nama_bulan($p->bulan) ?> <?= $p->tahun ?></td>
                 <td><?= $p->nama_komoditas ?></td>
                 <td><?= $p->jenis ?></td>

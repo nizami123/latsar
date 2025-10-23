@@ -19,6 +19,12 @@
           <table id="example1" class="table table-bordered table-striped">
             <thead>
               <tr>
+                <th style="width: 5%; text-align: center;">
+                  <div class="custom-checkbox">
+                    <input type="checkbox" id="checkAll">
+                    <label for="checkAll"></label>
+                  </div>
+                </th>
                 <th>Tanggal</th>
                 <th>Komoditas</th>
                 <th>Harga</th>
@@ -28,6 +34,12 @@
             <tbody>
               <?php foreach($harga as $row): ?>
               <tr>
+                <td style="text-align: center;">
+                  <div class="custom-checkbox">
+                    <input type="checkbox" class="checkItem" id="cb<?= $row->id_harga ?>" value="<?= $row->id_harga ?>">
+                    <label for="cb<?= $row->id_harga ?>"></label>
+                  </div>
+                </td>
                 <td><?= date('d-m-Y', strtotime($row->tanggal)) ?></td>
                 <td><?= $row->nama_komoditas ?></td>
                 <td><?= number_format($row->harga, 0, ',', '.') ?></td>

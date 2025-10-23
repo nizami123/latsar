@@ -14,6 +14,7 @@ class Produksi extends CI_Controller {
         $data['users'] = $this->db->get('master_user')->result();
         $data['title'] = "Data Produksi";
         $data['filename'] = "data_produksi";
+        $data['js'] = 'produksi.js';
         $this->load->view('templates/header');
         $this->load->view('templates/navbar');
         $this->load->view('produksi', $data);
@@ -102,4 +103,13 @@ class Produksi extends CI_Controller {
         redirect('produksi');
     }
 
+    public function delete_multiple()
+    {
+        $ids = $this->input->post('id_produksi');
+        if($ids) {
+            $this->db->where_in('id_produksi', $ids);
+            $this->db->delete('trx_produksi');
+        }
+        redirect('produksi');
+    }
 }

@@ -136,7 +136,6 @@
       </div>
     </section>
 
-
     <section class="content">
       <div class="container-fluid">
         <div class="card">
@@ -217,8 +216,6 @@
         </div>
       </div>
     </section>
-
-
   </div>
   <aside class="control-sidebar control-sidebar-dark">
     <!-- Control sidebar content goes here -->
@@ -240,8 +237,6 @@
 <script src="<?=base_url()?>assets/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
 <!-- AdminLTE App -->
 <script src="<?=base_url()?>assets/js/adminlte.js"></script>
-
-<!-- PAGE PLUGINS -->
 <!-- jQuery Mapael -->
 <script src="<?=base_url()?>assets/plugins/jquery-mousewheel/jquery.mousewheel.js"></script>
 <script src="<?=base_url()?>assets/plugins/raphael/raphael.min.js"></script>

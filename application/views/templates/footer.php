@@ -36,6 +36,10 @@
       responsive: true,
       lengthChange: false,
       autoWidth: false,
+      order: [],
+      columnDefs: [
+        { orderable: false, targets: 0 } // kolom pertama tidak bisa di-sort
+      ],
       buttons: [
         {
           extend: 'excel',

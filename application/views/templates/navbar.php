@@ -31,14 +31,17 @@
             <p>Rekap Data</p>
           </a>
         </li>
+        <?php if ($this->session->userdata('jabatan') == 'Admin Kecamatan'): ?>
         <li class="nav-item">
           <a href="<?= base_url('kecamatan') ?>" 
             class="nav-link <?= ($this->uri->segment(1) == 'kecamatan') ? 'active' : '' ?>">
-            <i class="nav-icon fas fa-database"></i>
+            <i class="nav-icon fas fa-chart-line"></i>
             <p>Rekap Kecamatan</p>
           </a>
         </li>
+        <?php endif; ?>
 
+        <?php if ($this->session->userdata('jabatan') == 'Admin Dinas'): ?>
         <li class="nav-header">MASTER DATA</li>
 
         <li class="nav-item">
@@ -48,6 +51,7 @@
             <p>KOMODITAS</p>
           </a>
         </li>
+        <?php endif; ?>
         <!-- <li class="nav-item">
           <a href="<?= base_url('penyakit') ?>" 
             class="nav-link <?= ($this->uri->segment(1) == 'penyakit') ? 'active' : '' ?>">
@@ -65,6 +69,7 @@
 
         <li class="nav-header">PELAPORAN</li>
 
+        <?php if ($this->session->userdata('jabatan') == 'Admin Dinas'): ?>
         <li class="nav-item">
           <a href="<?= base_url('harga') ?>" 
             class="nav-link <?= ($this->uri->segment(1) == 'harga') ? 'active' : '' ?>">
@@ -80,6 +85,7 @@
             <p>POPULASI</p>
           </a>
         </li>
+        <?php endif; ?>
 
         <li class="nav-item">
           <a href="<?= base_url('masuk') ?>" 

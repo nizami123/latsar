@@ -14,6 +14,7 @@ class Pemotongan extends CI_Controller {
         $data['komoditas'] = $this->Komoditas_model->getKomoditasPemotongan();
         $data['title'] = "Data Pemotongan";
         $data['filename'] = "data_pemotongan";
+        $data['js'] = 'pemotongan.js';
         $this->load->view('templates/header');
         $this->load->view('templates/navbar');
         $this->load->view('pemotongan', $data);
@@ -128,6 +129,16 @@ class Pemotongan extends CI_Controller {
                     'id_user'      => $this->session->userdata('id_user'),
                 ]);
             }
+        }
+        redirect('pemotongan');
+    }
+
+    public function delete_multiple()
+    {
+        $ids = $this->input->post('id_pemotongan');
+        if($ids) {
+            $this->db->where_in('id_pemotongan', $ids);
+            $this->db->delete('trx_pemotongan');
         }
         redirect('pemotongan');
     }
