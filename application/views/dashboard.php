@@ -186,11 +186,17 @@
 
             <!-- Tabel terpisah jadi 2 kolom untuk desktop -->
             <div class="row d-none d-md-flex">
-              <?php 
-                $chunked = array_chunk($pemotonganTotal, ceil(count($pemotonganTotal)/2)); 
+             <?php 
+                if (!empty($pemotonganTotal)) {
+                    $chunkSize = ceil(count($pemotonganTotal) / 2);
+                    $chunked = array_chunk($pemotonganTotal, max($chunkSize, 1));
+                } else {
+                    $chunked = []; // biar foreach di bawah tidak error
+                }
                 $no = 1;
-              ?>
-              <?php foreach ($chunked as $group): ?>
+                ?>
+                <?php foreach ($chunked as $group): ?>
+
                 <div class="col-md-6">
                   <table class="table table-bordered table-striped">
                     <thead class="thead-dark">

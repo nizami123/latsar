@@ -91,22 +91,28 @@ class Dashboard extends CI_Controller {
         ];
     }
 
-    private function getTotalPemotongan(){
-        $latest = $this->Pemotongan_model->get_latest_period();
-        if (!$latest) {
-            return [];
-        }
+    private function getTotalPemotongan()
+{
+    // Ambil periode terakhir dari model
+    $latest = $this->Pemotongan_model->get_latest_period();
 
+    if ($latest && isset($latest['bulan']) && isset($latest['tahun'])) {
         $bulan = $latest['bulan'];
         $tahun = $latest['tahun'];
-
-        // ambil total per komoditas
-        $data = $this->Pemotongan_model->get_total_per_komoditas($bulan, $tahun);
-
-        return [
-            'bulan' => $bulan,
-            'tahun' => $tahun,
-            'data'  => $data
-        ];
+    } else {
+        // Jika tidak ada data, gunakan bulan dan tahun saat ini
+        $bulan = date('m');
+        $tahun = date('Y');
     }
+
+    // Ambil total per komoditas
+    $data = $this->Pemotongan_model->get_total_per_komoditas($bulan, $tahun);
+
+    return [
+        'bulan' => $bulan,
+        'tahun' => $tahun,
+        'data'  => $data
+    ];
+}
+
 }
