@@ -43,6 +43,22 @@ class Masuk_model extends CI_Model {
         return $this->db->get()->result_array();
     }
 
+    public function get_pivot_data_kecamatan($bulan, $tahun) {
+        $this->db->select('
+            d.nama_desa AS kecamatan,
+            k.nama_komoditas,
+            SUM(p.jumlah) AS jumlah
+        ');
+        $this->db->from('trx_masuk p');
+        $this->db->join('master_desa d', 'p.kode_desa = d.kode_desa');
+        $this->db->join('master_komoditas k', 'p.id_komoditas = k.id_komoditas');
+        $this->db->where('p.bulan', $bulan);
+        $this->db->where('p.tahun', $tahun);
+        $this->db->where('d.kode', $this->session->userdata('kode'));
+        $this->db->group_by(['p.id_wilayah', 'p.id_komoditas', 'p.kode_desa']);
+        return $this->db->get()->result_array();
+    }
+
 
     public function get_total_per_komoditas($bulan, $tahun){
     return $this->db->select('mk.id_komoditas as id_komoditas, mk.nama_komoditas, SUM(tp.jumlah) as total')

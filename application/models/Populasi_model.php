@@ -38,9 +38,36 @@ class Populasi_model extends CI_Model {
         $this->db->where('p.bulan', $bulan);
         $this->db->where('p.tahun', $tahun);
         $this->db->group_by(['p.id_wilayah', 'p.id_komoditas', 'w.nama_wilayah', 'k.nama_komoditas']);
-        $this->db->order_by('w.nama_wilayah');
         $this->db->order_by('k.urut'); // agar komoditas urut sesuai master
         return $this->db->get()->result_array();
+    }
+
+    public function get_pivot_data_new($bulan, $tahun) {
+        $query = "SELECT 
+            d.nama_wilayah  AS kecamatan,
+            k.nama_komoditas,
+            coalesce(SUM(p.jumlah),0) + coalesce(SUM(kb.jumlah),0) -coalesce(SUM(kl.jumlah),0) + coalesce(SUM(ms.jumlah),0) - coalesce(SUM(kt.jumlah),0) as jumlah
+        FROM master_wilayah d
+        JOIN master_komoditas k
+        LEFT JOIN trx_populasi p ON p.id_wilayah = d.id_wilayah AND p.id_komoditas = k.id_komoditas 
+            AND p.bulan = MONTH(DATE_SUB(CONCAT(".$tahun.", '-', LPAD(".$bulan.", 2, '0'), '-01'), INTERVAL 1 MONTH))
+            AND p.tahun = YEAR(DATE_SUB(CONCAT(".$tahun.", '-', LPAD(".$bulan.", 2, '0'), '-01'), INTERVAL 1 MONTH))
+        LEFT JOIN trx_kelahiran kb ON kb.id_wilayah = d.id_wilayah AND kb.id_komoditas = k.id_komoditas
+            AND p.bulan = ".$bulan."
+            AND p.tahun = ".$tahun."
+        LEFT JOIN trx_kematian kt ON kt.id_wilayah = d.id_wilayah AND kt.id_komoditas = k.id_komoditas
+            AND p.bulan = ".$bulan."
+            AND p.tahun = ".$tahun."
+        LEFT JOIN trx_keluar kl ON kl.id_wilayah = d.id_wilayah AND kl.id_komoditas = k.id_komoditas
+            AND p.bulan = ".$bulan."
+            AND p.tahun = ".$tahun."
+        LEFT JOIN trx_masuk ms ON ms.id_wilayah = d.id_wilayah AND ms.id_komoditas = k.id_komoditas
+            AND p.bulan = ".$bulan."
+            AND p.tahun = ".$tahun."
+        WHERE k.urut is not null
+        GROUP BY d.id_wilayah, k.nama_komoditas
+        ORDER BY k.urut ASC";
+        return $this->db->query($query)->result_array();
     }
 
     public function get_pivot_data_kecamatan($bulan, $tahun) {

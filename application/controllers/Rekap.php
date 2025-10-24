@@ -55,7 +55,7 @@ class Rekap extends CI_Controller {
         $bulan = $latest['bulan'];
         $tahun = $latest['tahun'];
         // Ambil data populasi untuk bulan dan tahun tersebut
-        $raw_data = $this->Populasi_model->get_pivot_data($bulan, $tahun);
+        $raw_data = $this->Populasi_model->get_pivot_data_new($bulan, $tahun);
 
         $pivot = [];
         $komoditasList = [];
