@@ -82,139 +82,132 @@ class Populasi extends CI_Controller {
     }
 
     public function download_template() {
-        if ($this->session->userdata('jabatan') == 'Admin Kecamatan') {
-            $wilayah = $this->Komoditas_model->getDesa();
-        } else {
-            $wilayah = $this->Komoditas_model->getKecamatan();
-        }
-        $komoditas = $this->Komoditas_model->getKomoditasPopulasi();
+    // Mulai output buffering untuk mencegah error headers already sent
+    ob_start();
 
-        require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
-        $objPHPExcel = new PHPExcel();
-        $sheet = $objPHPExcel->setActiveSheetIndex(0);
-        $sheet->setTitle('Populasi');
-
-        // Header utama
-        if($this->session->userdata('jabatan') == 'Admin Kecamatan') {
-            $sheet->setCellValue('A1', 'Desa');
-        } else {
-            $sheet->setCellValue('A1', 'Kecamatan');
-        }
-        $sheet->mergeCells('A1:A3');
-
-        $col = 'B';
-        foreach ($komoditas as $k) {
-            $nama = $k->nama_komoditas;
-
-            if ($nama == 'Sapi Potong') {
-                $sheet->setCellValue($col.'1', 'Sapi Potong');
-                $sheet->mergeCells($col.'1:'.$this->nextCol($col, 5).'1');
-
-                $sheet->setCellValue($col.'2', 'Jantan');
-                $sheet->mergeCells($col.'2:'.$this->nextCol($col, 2).'2');
-                $sheet->setCellValue($col.'3', 'Anak');
-                $sheet->setCellValue($this->nextCol($col, 1).'3', 'Muda');
-                $sheet->setCellValue($this->nextCol($col, 2).'3', 'Dewasa');
-
-                $col = $this->nextCol($col, 3);
-
-                $sheet->setCellValue($col.'2', 'Betina');
-                $sheet->mergeCells($col.'2:'.$this->nextCol($col, 2).'2');
-                $sheet->setCellValue($col.'3', 'Anak');
-                $sheet->setCellValue($this->nextCol($col, 1).'3', 'Muda');
-                $sheet->setCellValue($this->nextCol($col, 2).'3', 'Dewasa');
-
-                $col = $this->nextCol($col, 3);
-            }
-            elseif ($nama == 'Sapi Perah') {
-                $sheet->setCellValue($col.'1', 'Sapi Perah');
-                $sheet->mergeCells($col.'1:'.$this->nextCol($col, 2).'1');
-
-                $sheet->setCellValue($col.'2', 'Betina');
-                $sheet->mergeCells($col.'2:'.$this->nextCol($col, 2).'2');
-                $sheet->setCellValue($col.'3', 'Anak');
-                $sheet->setCellValue($this->nextCol($col, 1).'3', 'Muda');
-                $sheet->setCellValue($this->nextCol($col, 2).'3', 'Dewasa');
-
-                $col = $this->nextCol($col, 3);
-            }
-            elseif ($nama == 'Kerbau' || $nama == 'Kuda') {
-                $sheet->setCellValue($col.'1', $nama);
-                $sheet->mergeCells($col.'1:'.$this->nextCol($col, 1).'1');
-
-                $sheet->setCellValue($col.'2', 'Jantan');
-                $sheet->setCellValue($this->nextCol($col, 1).'2', 'Betina');
-                $sheet->mergeCells($col.'3:'.$this->nextCol($col, 1).'3');
-
-                $col = $this->nextCol($col, 2);
-            }
-            else {
-                $sheet->setCellValue($col.'1', $nama);
-                $sheet->mergeCells($col.'1:'.$col.'3');
-                $col = $this->nextCol($col, 1);
-            }
-        }
-
-        // Isi data kecamatan
-        $row = 4;
-        foreach ($wilayah as $w) {
-            if($this->session->userdata('jabatan') == 'Admin Kecamatan') {
-                $sheet->setCellValue('A'.$row, $w->nama_desa);
-            } else {
-                $sheet->setCellValue('A'.$row, $w->nama_wilayah);
-            }
-            $row++;
-        }
-
-        // Styling header
-        $headerRange = 'A1:' . $sheet->getHighestColumn() . '3';
-        $sheet->getStyle($headerRange)->applyFromArray([
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
-            'fill' => [
-                'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                'color' => ['rgb' => '1F497D']
-            ],
-            'alignment' => [
-                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
-                'vertical'   => PHPExcel_Style_Alignment::VERTICAL_CENTER,
-                'wrap'       => true
-            ],
-            'borders' => [
-                'allborders' => ['style' => PHPExcel_Style_Border::BORDER_THIN]
-            ]
-        ]);
-
-        // Lebar kolom
-        $sheet->getColumnDimension('A')->setWidth(20);
-        for ($c = 'B'; $c <= $sheet->getHighestColumn(); $c++) {
-            $sheet->getColumnDimension($c)->setWidth(10);
-        }
-
-        // Freeze header
-        $sheet->freezePane('B4');
-
-       // Zebra style
-        $lastColumn = $sheet->getHighestColumn(); // kolom terakhir
-        $lastColumnIndex = PHPExcel_Cell::columnIndexFromString($lastColumn) - 1; // index kolom terakhir sebenarnya
-
-        for ($i = 4; $i < $row; $i++) {
-            if ($i % 2 == 0) {
-                // Konversi index kembali ke huruf kolom
-                $endColumn = PHPExcel_Cell::stringFromColumnIndex($lastColumnIndex - 1); 
-                $sheet->getStyle('A'.$i.':'.$endColumn.$i)
-                    ->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
-                    ->getStartColor()->setRGB('F2F2F2');
-            }
-        }
-
-        // Output file
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="template_populasi.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
-        $objWriter->save('php://output');
+    // Ambil data wilayah sesuai jabatan
+    if ($this->session->userdata('jabatan') == 'Admin Kecamatan') {
+        $wilayah = $this->Komoditas_model->getDesa();
+    } else {
+        $wilayah = $this->Komoditas_model->getKecamatan();
     }
+
+    // Ambil daftar komoditas
+    $komoditas = $this->Komoditas_model->getKomoditasPopulasi();
+
+    // Load PHPExcel
+    require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
+    $objPHPExcel = new PHPExcel();
+    $sheet = $objPHPExcel->setActiveSheetIndex(0);
+    $sheet->setTitle('Populasi');
+
+    // Header utama
+    $sheet->setCellValue('A1', ($this->session->userdata('jabatan') == 'Admin Kecamatan') ? 'Desa' : 'Kecamatan');
+    $sheet->mergeCells('A1:A3');
+
+    $col = 'B';
+    foreach ($komoditas as $k) {
+        $nama = $k->nama_komoditas;
+
+        if ($nama == 'Sapi Potong') {
+            $sheet->setCellValue($col.'1', 'Sapi Potong');
+            $sheet->mergeCells($col.'1:'.$this->nextCol($col, 5).'1');
+
+            $sheet->setCellValue($col.'2', 'Jantan');
+            $sheet->mergeCells($col.'2:'.$this->nextCol($col, 2).'2');
+            $sheet->setCellValue($col.'3', 'Anak');
+            $sheet->setCellValue($this->nextCol($col,1).'3', 'Muda');
+            $sheet->setCellValue($this->nextCol($col,2).'3', 'Dewasa');
+
+            $col = $this->nextCol($col, 3);
+
+            $sheet->setCellValue($col.'2', 'Betina');
+            $sheet->mergeCells($col.'2:'.$this->nextCol($col,2).'2');
+            $sheet->setCellValue($col.'3', 'Anak');
+            $sheet->setCellValue($this->nextCol($col,1).'3', 'Muda');
+            $sheet->setCellValue($this->nextCol($col,2).'3', 'Dewasa');
+
+            $col = $this->nextCol($col, 3);
+        }
+        elseif ($nama == 'Sapi Perah') {
+            $sheet->setCellValue($col.'1', 'Sapi Perah');
+            $sheet->mergeCells($col.'1:'.$this->nextCol($col,2).'1');
+
+            $sheet->setCellValue($col.'2', 'Betina');
+            $sheet->mergeCells($col.'2:'.$this->nextCol($col,2).'2');
+            $sheet->setCellValue($col.'3', 'Anak');
+            $sheet->setCellValue($this->nextCol($col,1).'3', 'Muda');
+            $sheet->setCellValue($this->nextCol($col,2).'3', 'Dewasa');
+
+            $col = $this->nextCol($col, 3);
+        }
+        elseif ($nama == 'Kerbau' || $nama == 'Kuda') {
+            $sheet->setCellValue($col.'1', $nama);
+            $sheet->mergeCells($col.'1:'.$this->nextCol($col,1).'1');
+
+            $sheet->setCellValue($col.'2', 'Jantan');
+            $sheet->setCellValue($this->nextCol($col,1).'2', 'Betina');
+            $sheet->mergeCells($col.'3:'.$this->nextCol($col,1).'3');
+
+            $col = $this->nextCol($col, 2);
+        }
+        else {
+            $sheet->setCellValue($col.'1', $nama);
+            $sheet->mergeCells($col.'1:'.$col.'3');
+            $col = $this->nextCol($col,1);
+        }
+    }
+
+    // Isi data wilayah
+    $row = 4;
+    foreach ($wilayah as $w) {
+        $sheet->setCellValue('A'.$row, ($this->session->userdata('jabatan') == 'Admin Kecamatan') ? $w->nama_desa : $w->nama_wilayah);
+        $row++;
+    }
+
+    // Styling header
+    $headerRange = 'A1:'.$sheet->getHighestColumn().'3';
+    $sheet->getStyle($headerRange)->applyFromArray([
+        'font' => ['bold'=>true,'color'=>['rgb'=>'FFFFFF'],'size'=>11],
+        'fill' => ['type'=>PHPExcel_Style_Fill::FILL_SOLID,'color'=>['rgb'=>'1F497D']],
+        'alignment'=>['horizontal'=>PHPExcel_Style_Alignment::HORIZONTAL_CENTER,'vertical'=>PHPExcel_Style_Alignment::VERTICAL_CENTER,'wrap'=>true],
+        'borders'=>['allborders'=>['style'=>PHPExcel_Style_Border::BORDER_THIN]]
+    ]);
+
+    // Lebar kolom
+    $sheet->getColumnDimension('A')->setWidth(20);
+    for ($c = 'B'; $c <= $sheet->getHighestColumn(); $c++) {
+        $sheet->getColumnDimension($c)->setWidth(10);
+    }
+
+    // Freeze header
+    $sheet->freezePane('B4');
+
+    // Zebra style
+    $lastColumn = $sheet->getHighestColumn();
+    $lastColumnIndex = PHPExcel_Cell::columnIndexFromString($lastColumn)-1;
+    for ($i=4; $i<$row; $i++) {
+        if ($i%2==0) {
+            $endColumn = PHPExcel_Cell::stringFromColumnIndex($lastColumnIndex-1);
+            $sheet->getStyle('A'.$i.':'.$endColumn.$i)
+                ->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
+                ->getStartColor()->setRGB('F2F2F2');
+        }
+    }
+
+    // Hapus semua output buffer sebelumnya supaya aman
+    ob_end_clean();
+
+    // Kirim header dan file Excel
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="template_populasi.xlsx"');
+    header('Cache-Control: max-age=0');
+
+    $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel,'Excel2007');
+    $objWriter->save('php://output');
+    exit;
+}
+
 
     private function nextCol($col, $n = 1) {
         for ($i = 0; $i < $n; $i++) {
