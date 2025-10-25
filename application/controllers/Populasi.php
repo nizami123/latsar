@@ -54,6 +54,22 @@ class Populasi extends CI_Controller {
         redirect('populasi');
     }
 
+    public function tes()
+    {
+        require_once APPPATH . 'third_party/PhpSpreadsheet/autoloader.php';
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setCellValue('A1', 'Hello dari CodeIgniter 3!');
+        $sheet->setCellValue('B1', 'PhpSpreadsheet v1.23.0 (PHP 7.3)');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $filename = 'contoh_export.xlsx';
+        $writer->save(FCPATH . $filename);
+
+        echo "File berhasil dibuat: <a href='" . base_url($filename) . "'>$filename</a>";
+    }
+
     public function update() {
         $post = $this->input->post();
 
