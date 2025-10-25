@@ -536,9 +536,9 @@ class PHPExcel_Shared_String
         for ($i=0; $i<$len; $i+=2) {
             if ($bom_be) {
                 $val = ord($str[$i])   << 4;
-                $val += ord($str{$i+1});
+                $val += ord($str[$i+1]);
             } else {
-                $val = ord($str{$i+1}) << 4;
+                $val = ord($str[$i+1]) << 4;
                 $val += ord($str[$i]);
             }
             $newstr .= ($val == 0x228) ? "\n" : chr($val);
