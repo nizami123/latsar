@@ -9,10 +9,11 @@ class Kecamatan extends CI_Controller {
         $this->load->model('Harga_model');
         $this->load->model('Populasi_model');
         $this->load->model('Komoditas_model');
-        $this->load->model('Masuk_model');      // model untuk data Masuk
-        $this->load->model('Keluar_model');     // model untuk data Keluar
-        $this->load->model('Kelahiran_model');  // model untuk data Kelahiran
-        $this->load->model('Kematian_model');   // model untuk data Kematian
+        $this->load->model('Masuk_model');
+        $this->load->model('Keluar_model');
+        $this->load->model('Kelahiran_model');
+        $this->load->model('Kematian_model');
+        $this->load->model('Pemotongan_model'); // ✅ Tambah model Pemotongan
 
         if(!$this->session->userdata('logged_in')){
             redirect('auth');
@@ -21,42 +22,52 @@ class Kecamatan extends CI_Controller {
 
     public function index()
     {
-        $populasi = $this->getDataPopulasi();
-        $masuk = $this->getDataMasuk();
-        $keluar = $this->getDataKeluar();
+        $populasi  = $this->getDataPopulasi();
+        $masuk     = $this->getDataMasuk();
+        $keluar    = $this->getDataKeluar();
         $kelahiran = $this->getDataKelahiran();
-        $kematian = $this->getDataKematian();
-        $data['kecamatan'] = $this->db->get_where('master_wilayah', ['kode' => $this->session->userdata('kode')])->row_array();
+        $kematian  = $this->getDataKematian();
+        $pemotongan = $this->getDataPemotongan(); // ✅ Tambah pemotongan
 
-        // Populasi
-        $data['populasiPivot'] = $populasi['pivot'];
+        $data['kecamatan'] = $this->db
+            ->get_where('master_wilayah', ['kode' => $this->session->userdata('kode')])
+            ->row_array();
+
+        // POPULASI
+        $data['populasiPivot']     = $populasi['pivot'];
         $data['populasiKomoditas'] = $populasi['komoditas'];
-        $data['populasiBulan'] = $populasi['bulan'];
-        $data['populasiTahun'] = $populasi['tahun'];
+        $data['populasiBulan']     = $populasi['bulan'];
+        $data['populasiTahun']     = $populasi['tahun'];
 
-        // Masuk
-        $data['masukPivot'] = $masuk['pivot'];
+        // MASUK
+        $data['masukPivot']     = $masuk['pivot'];
         $data['masukKomoditas'] = $masuk['komoditas'];
-        $data['masukBulan'] = $masuk['bulan'];
-        $data['masukTahun'] = $masuk['tahun'];
+        $data['masukBulan']     = $masuk['bulan'];
+        $data['masukTahun']     = $masuk['tahun'];
 
-        // Keluar
-        $data['keluarPivot'] = $keluar['pivot'];
+        // KELUAR
+        $data['keluarPivot']     = $keluar['pivot'];
         $data['keluarKomoditas'] = $keluar['komoditas'];
-        $data['keluarBulan'] = $keluar['bulan'];
-        $data['keluarTahun'] = $keluar['tahun'];
+        $data['keluarBulan']     = $keluar['bulan'];
+        $data['keluarTahun']     = $keluar['tahun'];
 
-        // Kelahiran
-        $data['kelahiranPivot'] = $kelahiran['pivot'];
+        // KELAHIRAN
+        $data['kelahiranPivot']     = $kelahiran['pivot'];
         $data['kelahiranKomoditas'] = $kelahiran['komoditas'];
-        $data['kelahiranBulan'] = $kelahiran['bulan'];
-        $data['kelahiranTahun'] = $kelahiran['tahun'];
+        $data['kelahiranBulan']     = $kelahiran['bulan'];
+        $data['kelahiranTahun']     = $kelahiran['tahun'];
 
-        // Kematian
-        $data['kematianPivot'] = $kematian['pivot'];
+        // KEMATIAN
+        $data['kematianPivot']     = $kematian['pivot'];
         $data['kematianKomoditas'] = $kematian['komoditas'];
-        $data['kematianBulan'] = $kematian['bulan'];
-        $data['kematianTahun'] = $kematian['tahun'];
+        $data['kematianBulan']     = $kematian['bulan'];
+        $data['kematianTahun']     = $kematian['tahun'];
+
+        // ✅ PEMOTONGAN
+        $data['pemotonganPivot']     = $pemotongan['pivot'];
+        $data['pemotonganKomoditas'] = $pemotongan['komoditas'];
+        $data['pemotonganBulan']     = $pemotongan['bulan'];
+        $data['pemotonganTahun']     = $pemotongan['tahun'];
 
         $this->load->view('templates/header');
         $this->load->view('templates/navbar');
@@ -67,8 +78,7 @@ class Kecamatan extends CI_Controller {
     private function getDataPopulasi() {
         $this->db->select('tahun, bulan');
         $this->db->from('trx_populasi');
-        $this->db->order_by('tahun','DESC');
-        $this->db->order_by('bulan','DESC');
+        $this->db->order_by('tahun','DESC')->order_by('bulan','DESC');
         $this->db->limit(1);
         $latest = $this->db->get()->row_array();
         if(!$latest) return ['pivot'=>[],'komoditas'=>[],'bulan'=>null,'tahun'=>null];
@@ -84,22 +94,20 @@ class Kecamatan extends CI_Controller {
         $bulan = $this->input->get('bulan') ?: date('n');
         $tahun = $this->input->get('tahun') ?: date('Y');
         $data = $this->getDataPopulasiByMonthYear($bulan,$tahun);
-        $this->output->set_content_type('application/json')
-            ->set_output(json_encode([
-                'bulan'=>$data['bulan'],
-                'tahun'=>$data['tahun'],
-                'nama_bulan'=>nama_bulan($data['bulan']),
-                'komoditas'=>$data['komoditas'],
-                'populasi'=>$data['pivot']
-            ]));
+        $this->output->set_content_type('application/json')->set_output(json_encode([
+            'bulan'=>$data['bulan'],
+            'tahun'=>$data['tahun'],
+            'nama_bulan'=>nama_bulan($data['bulan']),
+            'komoditas'=>$data['komoditas'],
+            'data'=>$data['pivot']
+        ]));
     }
 
     /* ===================== MASUK ===================== */
     private function getDataMasuk() {
         $this->db->select('tahun, bulan');
         $this->db->from('trx_masuk');
-        $this->db->order_by('tahun','DESC');
-        $this->db->order_by('bulan','DESC');
+        $this->db->order_by('tahun','DESC')->order_by('bulan','DESC');
         $this->db->limit(1);
         $latest = $this->db->get()->row_array();
         if(!$latest) return ['pivot'=>[],'komoditas'=>[],'bulan'=>null,'tahun'=>null];
@@ -115,22 +123,20 @@ class Kecamatan extends CI_Controller {
         $bulan = $this->input->get('bulan') ?: date('n');
         $tahun = $this->input->get('tahun') ?: date('Y');
         $data = $this->getDataMasukByMonthYear($bulan,$tahun);
-        $this->output->set_content_type('application/json')
-            ->set_output(json_encode([
-                'bulan'=>$data['bulan'],
-                'tahun'=>$data['tahun'],
-                'nama_bulan'=>nama_bulan($data['bulan']),
-                'komoditas'=>$data['komoditas'],
-                'data'=>$data['pivot']
-            ]));
+        $this->output->set_content_type('application/json')->set_output(json_encode([
+            'bulan'=>$data['bulan'],
+            'tahun'=>$data['tahun'],
+            'nama_bulan'=>nama_bulan($data['bulan']),
+            'komoditas'=>$data['komoditas'],
+            'data'=>$data['pivot']
+        ]));
     }
 
     /* ===================== KELUAR ===================== */
     private function getDataKeluar() {
         $this->db->select('tahun, bulan');
         $this->db->from('trx_keluar');
-        $this->db->order_by('tahun','DESC');
-        $this->db->order_by('bulan','DESC');
+        $this->db->order_by('tahun','DESC')->order_by('bulan','DESC');
         $this->db->limit(1);
         $latest = $this->db->get()->row_array();
         if(!$latest) return ['pivot'=>[],'komoditas'=>[],'bulan'=>null,'tahun'=>null];
@@ -146,22 +152,20 @@ class Kecamatan extends CI_Controller {
         $bulan = $this->input->get('bulan') ?: date('n');
         $tahun = $this->input->get('tahun') ?: date('Y');
         $data = $this->getDataKeluarByMonthYear($bulan,$tahun);
-        $this->output->set_content_type('application/json')
-            ->set_output(json_encode([
-                'bulan'=>$data['bulan'],
-                'tahun'=>$data['tahun'],
-                'nama_bulan'=>nama_bulan($data['bulan']),
-                'komoditas'=>$data['komoditas'],
-                'data'=>$data['pivot']
-            ]));
+        $this->output->set_content_type('application/json')->set_output(json_encode([
+            'bulan'=>$data['bulan'],
+            'tahun'=>$data['tahun'],
+            'nama_bulan'=>nama_bulan($data['bulan']),
+            'komoditas'=>$data['komoditas'],
+            'data'=>$data['pivot']
+        ]));
     }
 
     /* ===================== KELAHIRAN ===================== */
     private function getDataKelahiran() {
         $this->db->select('tahun, bulan');
         $this->db->from('trx_kelahiran');
-        $this->db->order_by('tahun','DESC');
-        $this->db->order_by('bulan','DESC');
+        $this->db->order_by('tahun','DESC')->order_by('bulan','DESC');
         $this->db->limit(1);
         $latest = $this->db->get()->row_array();
         if(!$latest) return ['pivot'=>[],'komoditas'=>[],'bulan'=>null,'tahun'=>null];
@@ -177,22 +181,20 @@ class Kecamatan extends CI_Controller {
         $bulan = $this->input->get('bulan') ?: date('n');
         $tahun = $this->input->get('tahun') ?: date('Y');
         $data = $this->getDataKelahiranByMonthYear($bulan,$tahun);
-        $this->output->set_content_type('application/json')
-            ->set_output(json_encode([
-                'bulan'=>$data['bulan'],
-                'tahun'=>$data['tahun'],
-                'nama_bulan'=>nama_bulan($data['bulan']),
-                'komoditas'=>$data['komoditas'],
-                'data'=>$data['pivot']
-            ]));
+        $this->output->set_content_type('application/json')->set_output(json_encode([
+            'bulan'=>$data['bulan'],
+            'tahun'=>$data['tahun'],
+            'nama_bulan'=>nama_bulan($data['bulan']),
+            'komoditas'=>$data['komoditas'],
+            'data'=>$data['pivot']
+        ]));
     }
 
     /* ===================== KEMATIAN ===================== */
     private function getDataKematian() {
         $this->db->select('tahun, bulan');
         $this->db->from('trx_kematian');
-        $this->db->order_by('tahun','DESC');
-        $this->db->order_by('bulan','DESC');
+        $this->db->order_by('tahun','DESC')->order_by('bulan','DESC');
         $this->db->limit(1);
         $latest = $this->db->get()->row_array();
         if(!$latest) return ['pivot'=>[],'komoditas'=>[],'bulan'=>null,'tahun'=>null];
@@ -208,14 +210,42 @@ class Kecamatan extends CI_Controller {
         $bulan = $this->input->get('bulan') ?: date('n');
         $tahun = $this->input->get('tahun') ?: date('Y');
         $data = $this->getDataKematianByMonthYear($bulan,$tahun);
-        $this->output->set_content_type('application/json')
-            ->set_output(json_encode([
-                'bulan'=>$data['bulan'],
-                'tahun'=>$data['tahun'],
-                'nama_bulan'=>nama_bulan($data['bulan']),
-                'komoditas'=>$data['komoditas'],
-                'data'=>$data['pivot']
-            ]));
+        $this->output->set_content_type('application/json')->set_output(json_encode([
+            'bulan'=>$data['bulan'],
+            'tahun'=>$data['tahun'],
+            'nama_bulan'=>nama_bulan($data['bulan']),
+            'komoditas'=>$data['komoditas'],
+            'data'=>$data['pivot']
+        ]));
+    }
+
+    /* ===================== ✅ PEMOTONGAN ===================== */
+    private function getDataPemotongan() {
+        $this->db->select('tahun, bulan');
+        $this->db->from('trx_pemotongan');
+        $this->db->order_by('tahun','DESC')->order_by('bulan','DESC');
+        $this->db->limit(1);
+        $latest = $this->db->get()->row_array();
+        if(!$latest) return ['pivot'=>[],'komoditas'=>[],'bulan'=>null,'tahun'=>null];
+        return $this->getDataPemotonganByMonthYear($latest['bulan'], $latest['tahun']);
+    }
+
+    private function getDataPemotonganByMonthYear($bulan,$tahun) {
+        $raw_data = $this->Pemotongan_model->get_pivot_data_kecamatan($bulan,$tahun);
+        return $this->preparePivot($raw_data);
+    }
+
+    public function get_data_pemotongan(){
+        $bulan = $this->input->get('bulan') ?: date('n');
+        $tahun = $this->input->get('tahun') ?: date('Y');
+        $data = $this->getDataPemotonganByMonthYear($bulan,$tahun);
+        $this->output->set_content_type('application/json')->set_output(json_encode([
+            'bulan'=>$data['bulan'],
+            'tahun'=>$data['tahun'],
+            'nama_bulan'=>nama_bulan($data['bulan']),
+            'komoditas'=>$data['komoditas'],
+            'data'=>$data['pivot']
+        ]));
     }
 
     /* ===================== UTILITY ===================== */

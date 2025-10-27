@@ -280,6 +280,65 @@
         </div>
       </div>
 
+      <!-- ======= TABEL PEMOTONGAN ======= -->
+      <div class="card">
+        <div class="card-header bg-secondary text-white d-flex align-items-center">
+          <h3 class="card-title mb-0">
+            Data Pemotongan Ternak Kecamatan <?= $kecamatan['nama_wilayah'] ?>
+          </h3>
+          <div class="form-inline ml-auto">
+            <select id="filterBulanPemotongan" class="form-control form-control-sm mr-2">
+              <?php for ($i = 1; $i <= 12; $i++): ?>
+                <option value="<?= $i ?>" <?= ($i == $pemotonganBulan) ? 'selected' : '' ?>><?= nama_bulan($i) ?></option>
+              <?php endfor; ?>
+            </select>
+            <select id="filterTahunPemotongan" class="form-control form-control-sm mr-2">
+              <?php $tahunSekarang = date('Y'); for ($t = $tahunSekarang; $t >= 2020; $t--): ?>
+                <option value="<?= $t ?>" <?= ($t == $pemotonganTahun) ? 'selected' : '' ?>><?= $t ?></option>
+              <?php endfor; ?>
+            </select>
+            <button id="btnFilterPemotongan" class="btn btn-sm btn-light"><i class="fas fa-search"></i> Tampilkan</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table id="pemotonganDashboard" class="table table-bordered table-striped table-sm dashboard">
+              <thead>
+                <tr>
+                  <th style="min-width:150px;">Desa</th>
+                  <?php foreach ($pemotonganKomoditas as $kom): ?>
+                    <th style="min-width:100px; text-align:center"><?= $kom ?></th>
+                  <?php endforeach; ?>
+                </tr>
+              </thead>
+              <tbody id="pemotonganBody">
+                <?php
+                  $totalPerKomoditas = array_fill_keys($pemotonganKomoditas, 0);
+                  foreach ($pemotonganPivot as $kec => $row):
+                ?>
+                <tr>
+                  <td style="background-color:black"><?= $kec ?></td>
+                  <?php foreach ($pemotonganKomoditas as $kom):
+                    $val = isset($row[$kom]) ? $row[$kom] : 0;
+                    $totalPerKomoditas[$kom] += $val;
+                  ?>
+                  <td style="text-align:center"><?= number_format($val) ?></td>
+                  <?php endforeach; ?>
+                </tr>
+                <?php endforeach; ?>
+                <tr style="font-weight:bold; background-color:black;">
+                  <td>Total</td>
+                  <?php foreach ($pemotonganKomoditas as $kom): ?>
+                    <td style="text-align:center"><?= number_format($totalPerKomoditas[$kom]) ?></td>
+                  <?php endforeach; ?>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
     </div>
   </section>
 </div>
@@ -352,4 +411,5 @@ setupFilter('#btnFilterMasuk', '#filterBulanMasuk', '#filterTahunMasuk', '#masuk
 setupFilter('#btnFilterKeluar', '#filterBulanKeluar', '#filterTahunKeluar', '#keluarBody', "<?= base_url('rekap/get_data_keluar') ?>");
 setupFilter('#btnFilterKelahiran', '#filterBulanKelahiran', '#filterTahunKelahiran', '#kelahiranBody', "<?= base_url('rekap/get_data_kelahiran') ?>");
 setupFilter('#btnFilterKematian', '#filterBulanKematian', '#filterTahunKematian', '#kematianBody', "<?= base_url('rekap/get_data_kematian') ?>");
+setupFilter('#btnFilterPemotongan','#filterBulanPemotongan','#filterTahunPemotongan','#pemotonganBody',"<?= base_url('rekap/get_data_pemotongan') ?>");
 </script>

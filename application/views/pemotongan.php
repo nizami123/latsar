@@ -41,7 +41,12 @@
                 </td>
                 <td><?= nama_bulan($p->bulan) ?> <?= $p->tahun ?></td>
                 <td><?= $p->nama_wilayah ?></td>
-                <td><?= $p->nama_komoditas ?></td>
+                <td>
+                    <?= $p->nama_komoditas ?>
+                    <?php if (!empty($p->jenis_kelamin)): ?>
+                        - <?= $p->jenis_kelamin ?>
+                    <?php endif; ?>
+                </td>
                 <td><?= $p->jumlah ?></td>
                 <td>
                   <button 

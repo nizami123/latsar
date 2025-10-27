@@ -43,30 +43,59 @@ class Populasi_model extends CI_Model {
     }
 
     public function get_pivot_data_new($bulan, $tahun) {
-        $query = "SELECT 
-            d.nama_wilayah  AS kecamatan,
-            k.nama_komoditas,
-            coalesce(SUM(p.jumlah),0) + coalesce(SUM(kb.jumlah),0) -coalesce(SUM(kl.jumlah),0) + coalesce(SUM(ms.jumlah),0) - coalesce(SUM(kt.jumlah),0) as jumlah
+        $query = "SELECT
+        d.nama_wilayah AS kecamatan,
+        k.nama_komoditas,
+        COALESCE(p.pop_jumlah,0) AS populasi,
+        COALESCE(kb.kelahiran_jumlah,0) AS kelahiran,
+        COALESCE(kt.kematian_jumlah,0) AS kematian,
+        COALESCE(ms.masuk_jumlah,0) AS masuk,
+        COALESCE(kl.keluar_jumlah,0) AS keluar,
+        COALESCE(pm.pemotongan_jumlah,0) AS pemotongan,
+        (COALESCE(p.pop_jumlah,0) + COALESCE(kb.kelahiran_jumlah,0) + COALESCE(ms.masuk_jumlah,0)
+        - COALESCE(kl.keluar_jumlah,0) - COALESCE(kt.kematian_jumlah,0) - COALESCE(pm.pemotongan_jumlah,0)
+        ) AS jumlah
         FROM master_wilayah d
-        JOIN master_komoditas k
-        LEFT JOIN trx_populasi p ON p.id_wilayah = d.id_wilayah AND p.id_komoditas = k.id_komoditas 
-            AND p.bulan = MONTH(DATE_SUB(CONCAT(".$tahun.", '-', LPAD(".$bulan.", 2, '0'), '-01'), INTERVAL 1 MONTH))
-            AND p.tahun = YEAR(DATE_SUB(CONCAT(".$tahun.", '-', LPAD(".$bulan.", 2, '0'), '-01'), INTERVAL 1 MONTH))
-        LEFT JOIN trx_kelahiran kb ON kb.id_wilayah = d.id_wilayah AND kb.id_komoditas = k.id_komoditas
-            AND p.bulan = ".$bulan."
-            AND p.tahun = ".$tahun."
-        LEFT JOIN trx_kematian kt ON kt.id_wilayah = d.id_wilayah AND kt.id_komoditas = k.id_komoditas
-            AND p.bulan = ".$bulan."
-            AND p.tahun = ".$tahun."
-        LEFT JOIN trx_keluar kl ON kl.id_wilayah = d.id_wilayah AND kl.id_komoditas = k.id_komoditas
-            AND p.bulan = ".$bulan."
-            AND p.tahun = ".$tahun."
-        LEFT JOIN trx_masuk ms ON ms.id_wilayah = d.id_wilayah AND ms.id_komoditas = k.id_komoditas
-            AND p.bulan = ".$bulan."
-            AND p.tahun = ".$tahun."
-        WHERE k.urut is not null
-        GROUP BY d.id_wilayah, k.nama_komoditas
-        ORDER BY k.urut ASC";
+        CROSS JOIN master_komoditas k
+        LEFT JOIN (
+        SELECT id_wilayah, id_komoditas, SUM(jumlah) AS pop_jumlah
+        FROM trx_populasi
+        WHERE bulan = MONTH(DATE_SUB(CONCAT('".$tahun."','-','".$bulan."','-01'), INTERVAL 1 MONTH))
+            AND tahun = YEAR(DATE_SUB(CONCAT('".$tahun."','-','".$bulan."','-01'), INTERVAL 1 MONTH))
+        GROUP BY id_wilayah, id_komoditas
+        ) p ON p.id_wilayah = d.id_wilayah AND p.id_komoditas = k.id_komoditas
+        LEFT JOIN (
+        SELECT id_wilayah, id_komoditas, SUM(jumlah) AS kelahiran_jumlah
+        FROM trx_kelahiran
+        WHERE bulan='".$bulan."' AND tahun='".$tahun."'
+        GROUP BY id_wilayah, id_komoditas
+        ) kb ON kb.id_wilayah = d.id_wilayah AND kb.id_komoditas = k.id_komoditas
+        LEFT JOIN (
+        SELECT id_wilayah, id_komoditas, SUM(jumlah) AS kematian_jumlah
+        FROM trx_kematian
+        WHERE bulan='".$bulan."' AND tahun='".$tahun."'
+        GROUP BY id_wilayah, id_komoditas
+        ) kt ON kt.id_wilayah = d.id_wilayah AND kt.id_komoditas = k.id_komoditas
+        LEFT JOIN (
+        SELECT id_wilayah, id_komoditas, SUM(jumlah) AS keluar_jumlah
+        FROM trx_keluar
+        WHERE bulan='".$bulan."' AND tahun='".$tahun."'
+        GROUP BY id_wilayah, id_komoditas
+        ) kl ON kl.id_wilayah = d.id_wilayah AND kl.id_komoditas = k.id_komoditas
+        LEFT JOIN (
+        SELECT id_wilayah, id_komoditas, SUM(jumlah) AS masuk_jumlah
+        FROM trx_masuk
+        WHERE bulan='".$bulan."' AND tahun='".$tahun."'
+        GROUP BY id_wilayah, id_komoditas
+        ) ms ON ms.id_wilayah = d.id_wilayah AND ms.id_komoditas = k.id_komoditas
+        LEFT JOIN (
+        SELECT id_wilayah, id_komoditas, SUM(jumlah) AS pemotongan_jumlah
+        FROM trx_pemotongan
+        WHERE bulan='".$bulan."' AND tahun='".$tahun."'
+        GROUP BY id_wilayah, id_komoditas
+        ) pm ON pm.id_wilayah = d.id_wilayah AND pm.id_komoditas = k.id_komoditas
+        WHERE k.urut IS NOT NULL and d.urut < 100
+        ORDER BY k.urut asc;";
         return $this->db->query($query)->result_array();
     }
 

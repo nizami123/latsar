@@ -17,7 +17,7 @@
 <body class="hold-transition login-page">
 <div class="login-box">
   <div class="login-logo">
-    <a href="<?=base_url()?>index2.html">Dinas Peternakan dan Kesehatan Hewan</a>
+    <a href="#">Dinas Peternakan dan Kesehatan Hewan</a>
   </div>
   <!-- /.login-logo -->
   <div class="card">
