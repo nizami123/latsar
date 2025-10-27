@@ -83,9 +83,14 @@ class Kelahiran extends CI_Controller {
 
     public function download_template() {
         if ($this->session->userdata('jabatan') == 'Admin Kecamatan') {
+            $kec = $this->db->get_where('master_wilayah', [
+                'kode' => $this->session->userdata('kode')
+            ])->row();
             $wilayah = $this->Komoditas_model->getDesa();
+            $header = 'DATA KELAHIRAN KECAMATAN ' . strtoupper($kec->nama_wilayah);
         } else {
             $wilayah = $this->Komoditas_model->getKecamatan();
+            $header = 'DATA KELAHIRAN KABUPATEN LAMONGAN';
         }
         $komoditas = $this->Komoditas_model->getKomoditasKelahiran();
 
@@ -94,69 +99,94 @@ class Kelahiran extends CI_Controller {
         $sheet = $objPHPExcel->setActiveSheetIndex(0);
         $sheet->setTitle('Kelahiran');
 
-        // Header utama
-        if($this->session->userdata('jabatan') == 'Admin Kecamatan') {
-            $sheet->setCellValue('A1', 'Desa');
+        // ===== JUDUL UTAMA =====
+        $sheet->setCellValue('A1', $header);
+        // Sementara merge ke kolom lebar, nanti disesuaikan di bawah
+        $sheet->mergeCells('A1:Z1');
+        $sheet->getRowDimension('1')->setRowHeight(30);
+
+        $sheet->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 16],
+            'fill' => [
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'color' => ['rgb' => '305496'] // Biru tua elegan
+            ],
+            'alignment' => [
+                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+                'vertical'   => PHPExcel_Style_Alignment::VERTICAL_CENTER
+            ],
+            'borders' => [
+                'allborders' => ['style' => PHPExcel_Style_Border::BORDER_THIN]
+            ]
+        ]);
+
+        // ===== HEADER UTAMA (mulai baris ke-2) =====
+        if ($this->session->userdata('jabatan') == 'Admin Kecamatan') {
+            $sheet->setCellValue('A2', 'Desa');
         } else {
-            $sheet->setCellValue('A1', 'Kecamatan');
+            $sheet->setCellValue('A2', 'Kecamatan');
         }
-        $sheet->mergeCells('A1:A3');
+        $sheet->mergeCells('A2:A4');
 
         $col = 'B';
         foreach ($komoditas as $k) {
             $nama = $k->nama_komoditas;
 
             if ($nama == 'Sapi Potong') {
-                $sheet->setCellValue($col.'1', 'Sapi Potong');
-                $sheet->mergeCells($col.'1:'.$this->nextCol($col, 5).'1');
+                $sheet->setCellValue($col.'2', 'Sapi Potong');
+                $sheet->mergeCells($col.'2:'.$this->nextCol($col, 5).'2');
 
-                $sheet->setCellValue($col.'2', 'Jantan');
-                $sheet->mergeCells($col.'2:'.$this->nextCol($col, 2).'2');
-                $sheet->setCellValue($col.'3', 'Anak');
-                $sheet->setCellValue($this->nextCol($col, 1).'3', 'Muda');
-                $sheet->setCellValue($this->nextCol($col, 2).'3', 'Dewasa');
+                $sheet->setCellValue($col.'3', 'Jantan');
+                $sheet->mergeCells($col.'3:'.$this->nextCol($col, 2).'3');
+                $sheet->setCellValue($col.'4', 'Anak');
+                $sheet->setCellValue($this->nextCol($col, 1).'4', 'Muda');
+                $sheet->setCellValue($this->nextCol($col, 2).'4', 'Dewasa');
 
                 $col = $this->nextCol($col, 3);
 
-                $sheet->setCellValue($col.'2', 'Betina');
-                $sheet->mergeCells($col.'2:'.$this->nextCol($col, 2).'2');
-                $sheet->setCellValue($col.'3', 'Anak');
-                $sheet->setCellValue($this->nextCol($col, 1).'3', 'Muda');
-                $sheet->setCellValue($this->nextCol($col, 2).'3', 'Dewasa');
+                $sheet->setCellValue($col.'3', 'Betina');
+                $sheet->mergeCells($col.'3:'.$this->nextCol($col, 2).'3');
+                $sheet->setCellValue($col.'4', 'Anak');
+                $sheet->setCellValue($this->nextCol($col, 1).'4', 'Muda');
+                $sheet->setCellValue($this->nextCol($col, 2).'4', 'Dewasa');
 
                 $col = $this->nextCol($col, 3);
             }
             elseif ($nama == 'Sapi Perah') {
-                $sheet->setCellValue($col.'1', 'Sapi Perah');
-                $sheet->mergeCells($col.'1:'.$this->nextCol($col, 2).'1');
-
-                $sheet->setCellValue($col.'2', 'Betina');
+                $sheet->setCellValue($col.'2', 'Sapi Perah');
                 $sheet->mergeCells($col.'2:'.$this->nextCol($col, 2).'2');
-                $sheet->setCellValue($col.'3', 'Anak');
-                $sheet->setCellValue($this->nextCol($col, 1).'3', 'Muda');
-                $sheet->setCellValue($this->nextCol($col, 2).'3', 'Dewasa');
+
+                $sheet->setCellValue($col.'3', 'Betina');
+                $sheet->mergeCells($col.'3:'.$this->nextCol($col, 2).'3');
+                $sheet->setCellValue($col.'4', 'Anak');
+                $sheet->setCellValue($this->nextCol($col, 1).'4', 'Muda');
+                $sheet->setCellValue($this->nextCol($col, 2).'4', 'Dewasa');
 
                 $col = $this->nextCol($col, 3);
             }
             elseif ($nama == 'Kerbau' || $nama == 'Kuda') {
-                $sheet->setCellValue($col.'1', $nama);
-                $sheet->mergeCells($col.'1:'.$this->nextCol($col, 1).'1');
+                $sheet->setCellValue($col.'2', $nama);
+                $sheet->mergeCells($col.'2:'.$this->nextCol($col, 1).'2');
 
-                $sheet->setCellValue($col.'2', 'Jantan');
-                $sheet->setCellValue($this->nextCol($col, 1).'2', 'Betina');
-                $sheet->mergeCells($col.'3:'.$this->nextCol($col, 1).'3');
+                $sheet->setCellValue($col.'3', 'Jantan');
+                $sheet->setCellValue($this->nextCol($col, 1).'3', 'Betina');
+                $sheet->mergeCells($col.'4:'.$this->nextCol($col, 1).'4');
 
                 $col = $this->nextCol($col, 2);
             }
             else {
-                $sheet->setCellValue($col.'1', $nama);
-                $sheet->mergeCells($col.'1:'.$col.'3');
+                $sheet->setCellValue($col.'2', $nama);
+                $sheet->mergeCells($col.'2:'.$col.'4');
                 $col = $this->nextCol($col, 1);
             }
         }
 
-        // Isi data kecamatan
-        $row = 4;
+        // Update merge judul sesuai kolom terakhir
+        $lastCol = $sheet->getHighestColumn();
+        $sheet->mergeCells('A1:'.$lastCol.'1');
+
+        // ===== ISI DATA =====
+        $row = 5;
         foreach ($wilayah as $w) {
             if($this->session->userdata('jabatan') == 'Admin Kecamatan') {
                 $sheet->setCellValue('A'.$row, $w->nama_desa);
@@ -166,8 +196,8 @@ class Kelahiran extends CI_Controller {
             $row++;
         }
 
-        // Styling header
-        $headerRange = 'A1:' . $sheet->getHighestColumn() . '3';
+        // ===== STYLING HEADER =====
+        $headerRange = 'A2:' . $sheet->getHighestColumn() . '4';
         $sheet->getStyle($headerRange)->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
             'fill' => [
@@ -184,30 +214,29 @@ class Kelahiran extends CI_Controller {
             ]
         ]);
 
-        // Lebar kolom
+        // ===== LEBAR KOLOM =====
         $sheet->getColumnDimension('A')->setWidth(20);
         for ($c = 'B'; $c <= $sheet->getHighestColumn(); $c++) {
             $sheet->getColumnDimension($c)->setWidth(10);
         }
 
-        // Freeze header
-        $sheet->freezePane('B4');
+        // ===== FREEZE HEADER =====
+        $sheet->freezePane('B5');
 
-       // Zebra style
-        $lastColumn = $sheet->getHighestColumn(); // kolom terakhir
-        $lastColumnIndex = PHPExcel_Cell::columnIndexFromString($lastColumn) - 1; // index kolom terakhir sebenarnya
+        // ===== ZEBRA STRIPE =====
+        $lastColumn = $sheet->getHighestColumn();
+        $lastColumnIndex = PHPExcel_Cell::columnIndexFromString($lastColumn) - 1;
 
-        for ($i = 4; $i < $row; $i++) {
+        for ($i = 5; $i < $row; $i++) {
             if ($i % 2 == 0) {
-                // Konversi index kembali ke huruf kolom
-                $endColumn = PHPExcel_Cell::stringFromColumnIndex($lastColumnIndex - 1); 
+                $endColumn = PHPExcel_Cell::stringFromColumnIndex($lastColumnIndex - 1);
                 $sheet->getStyle('A'.$i.':'.$endColumn.$i)
                     ->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
                     ->getStartColor()->setRGB('F2F2F2');
             }
         }
 
-        // Output file
+        // ===== OUTPUT FILE =====
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="template_kelahiran.xlsx"');
         header('Cache-Control: max-age=0');
@@ -231,71 +260,76 @@ class Kelahiran extends CI_Controller {
 
         require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
 
-        $objPHPExcel = new PHPExcel();
+        // Load file Excel
         $objPHPExcel = PHPExcel_IOFactory::load($file);
-        $sheet = $objPHPExcel->getActiveSheet()->toArray(null,true,true,true);
+        $sheet = $objPHPExcel->getActiveSheet()->toArray(null, true, true, true);
 
+        // Ambil data master
         $komoditas = $this->Komoditas_model->getKomoditasIndexed(); // nama => id
         if ($this->session->userdata('jabatan') == 'Admin Kecamatan') {
-            $wilayah = $this->Komoditas_model->getDesaIndexed();
+            $wilayah_master = $this->Komoditas_model->getDesaIndexed(); // nama => id
         } else {
-            $wilayah = $this->Komoditas_model->getKecamatanIndexed();   // nama => id
+            $wilayah_master = $this->Komoditas_model->getKecamatanIndexed(); // nama => id
         }
-        
-        $headers = $sheet[1];
-        $jkel = $sheet[2];
-        $umur = $sheet[3];
-        unset($sheet[1]);
-        unset($sheet[2]);
-        unset($sheet[3]);
-        
-        foreach ($sheet as $row) {
 
-            $nama_wilayah = $row['A'];
+        // Ambil header
+        $headers = $sheet[2]; // nama komoditas
+        $jkel    = $sheet[3]; // jenis kelamin
+        $umur    = $sheet[4]; // umur
+
+        // Ambil data mulai baris ke-4, reindex array
+        $sheet_data = array_slice($sheet, 4);
+
+        foreach ($sheet_data as $row) {
+            $nama_wilayah = trim($row['A']);
             if (empty($nama_wilayah)) continue;
 
-            $id_wilayah = $wilayah[$nama_wilayah] ?? null;
+            $id_wilayah = $wilayah_master[$nama_wilayah] ?? null;
             if (!$id_wilayah) continue;
 
             foreach ($headers as $col => $komod) {
-
                 if ($col == 'A') continue;
+
                 $id_komoditas = $komoditas[$komod] ?? null;
-                
-                if ($col == 'B' || $col == 'C' || $col == 'D' || $col == 'E' || $col == 'F' || $col == 'G') {
+                $jenis_kelamin = null;
+                $umur_value = null;
+
+                // logika kolom khusus
+                if (in_array($col, ['B','C','D','E','F','G'])) {
                     $id_komoditas = $komoditas['Sapi Potong'] ?? null;
                     $jenis_kelamin = ($col <= 'D') ? 'Jantan' : 'Betina';
-                    $umur_value    = $umur[$col];
-                } elseif ($col == 'H' || $col == 'I' || $col == 'J') {
+                    $umur_value    = $umur[$col] ?? null;
+                } elseif (in_array($col, ['H','I','J'])) {
                     $id_komoditas = $komoditas['Sapi Perah'] ?? null;
                     $jenis_kelamin = 'Betina';
-                    $umur_value    = $umur[$col];
-                } elseif ($col == 'K' || $col == 'L') {
+                    $umur_value    = $umur[$col] ?? null;
+                } elseif (in_array($col, ['K','L'])) {
                     $id_komoditas = $komoditas['Kerbau'] ?? null;
-                    $jenis_kelamin = $jkel[$col];
-                    $umur_value    = null;
-                } elseif ($col == 'M' || $col == 'N') {
+                    $jenis_kelamin = $jkel[$col] ?? null;
+                } elseif (in_array($col, ['M','N'])) {
                     $id_komoditas = $komoditas['Kuda'] ?? null;
-                    $jenis_kelamin = $jkel[$col];
-                    $umur_value    = null;
-                } else {
-                    $id_komoditas = $komoditas[$komod] ?? null;
-                    $jenis_kelamin = null;
-                    $umur_value    = null;
+                    $jenis_kelamin = $jkel[$col] ?? null;
                 }
 
                 if (!$id_komoditas) continue;
 
+                // Logika Admin Kecamatan vs Admin Pusat
                 if ($this->session->userdata('jabatan') == 'Admin Kecamatan') {
-                    $kecamatan = $this->db->get_where('master_wilayah', ['kode' => $this->session->userdata('kode')])->row();
+                    $kecamatan = $this->db->get_where('master_wilayah', [
+                        'kode' => $this->session->userdata('kode')
+                    ])->row();
                     $wilayah = $kecamatan->id_wilayah;
-                    $kode = $id_wilayah;
+                    $kode    = $id_wilayah; // kode desa
                 } else {
                     $wilayah = $id_wilayah;
-                    $kode = NULL;
+                    $kode    = null;
                 }
 
-                $jumlah = (int) preg_replace('/[^\d]/', '', $row[$col]);
+                // Ambil jumlah
+                $jumlah = isset($row[$col]) ? (int) preg_replace('/[^\d]/', '', $row[$col]) : 0;
+                if ($jumlah <= 0) continue;
+
+                // Siapkan data untuk insert
                 $data_insert = [
                     'bulan'         => $bulan,
                     'tahun'         => $tahun,
@@ -307,13 +341,9 @@ class Kelahiran extends CI_Controller {
                     'kode_desa'     => $kode,
                     'umur'          => $umur_value,
                 ];
-                // Simpan ke database
                 $this->Kelahiran_model->insert($data_insert);
             }
         }
-
-        
-
         redirect('kelahiran');
     }
 

@@ -15,7 +15,7 @@ class Harga_model extends CI_Model {
      public function getLatestHarga()
     {
         $sql = "
-            SELECT h.id_komoditas, m.nama_komoditas, h.harga, h.tanggal
+            SELECT h.id_komoditas, m.nama_komoditas, h.harga, h.tanggal, m.satuan
             FROM trx_harga h
             JOIN master_komoditas m ON h.id_komoditas = m.id_komoditas
             WHERE h.tanggal = (

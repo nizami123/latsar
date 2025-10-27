@@ -29,37 +29,10 @@
           <?php foreach ($harga as $h): ?>
             <div class="col-12 col-sm-6 col-md-2">
               <div class="info-box">
-                <!-- Pilih icon berdasarkan komoditas -->
-                <span class="info-box-icon 
-                  <?php 
-                    switch ($h->id_komoditas) {
-                      case 7: echo 'bg-info'; break;        // Sapi
-                      case 8: echo 'bg-danger'; break;      // Daging Sapi
-                      case 9: echo 'bg-success'; break;     // Ayam Broiler
-                      case 10: echo 'bg-warning'; break;    // Karkas Broiler
-                      case 11: echo 'bg-primary'; break;    // Telur Ras (P)
-                      case 12: echo 'bg-secondary'; break;  // Telur Ras (K)
-                      default: echo 'bg-dark';
-                    }
-                  ?> elevation-1">
-                  <i class="fas 
-                    <?php 
-                      switch ($h->id_komoditas) {
-                        case 7: echo 'fa-horse'; break;            // Sapi
-                        case 8: echo 'fa-drumstick-bite'; break;   // Daging Sapi
-                        case 9: echo 'fa-kiwi-bird'; break;        // Ayam Broiler
-                        case 10: echo 'fa-drumstick-bite'; break;  // Karkas
-                        case 11: echo 'fa-egg'; break;             // Telur P
-                        case 12: echo 'fa-egg'; break;             // Telur K
-                        default: echo 'fa-chart-line';
-                      }
-                    ?>">
-                  </i>
-                </span>
 
                 <div class="info-box-content">
                   <span class="info-box-text"><?= $h->nama_komoditas ?></span>
-                  <span class="info-box-number"><?= number_format($h->harga, 0, ',', '.') ?></span>
+                  <span class="info-box-number"><?= number_format($h->harga, 0, ',', '.') ?> / <?= $h->satuan ?></span>
                 </div>
               </div>
             </div>
