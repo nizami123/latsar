@@ -47,6 +47,8 @@ class Kematian extends CI_Controller {
             'id_wilayah' => $wilayah->id_wilayah, 
             'id_komoditas' => $post['id_komoditas'],
             'jumlah' => $post['jumlah'],
+            'jenis_kelamin' => $post['jkel'],
+            'umur' => $post['umur'],
             'kode_desa' => $post['kode_desa'],
             'id_user' => $this->session->userdata('id_user')
         ];

@@ -126,6 +126,25 @@
           </div>
 
           <div class="form-group">
+            <label>Jenis Kelamin</label>
+            <select name="jkel" class="form-control">
+              <option value="" selected>-- Pilih Jenis Kelamin --</option>
+                <option value="Jantan">Jantan</option>
+                <option value="Betina">Betina</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Umur</label>
+            <select name="umur" class="form-control">
+              <option value="" selected>-- Pilih Umur --</option>
+              <option value="Anak">Anak</option>
+              <option value="Muda">Muda</option>
+              <option value="Dewasa">Dewasa</option>
+            </select>
+          </div>
+
+          <div class="form-group">
             <label>Jumlah</label>
             <input type="number" name="jumlah" class="form-control" required>
           </div>

@@ -48,6 +48,8 @@ class Masuk extends CI_Controller {
             'id_komoditas' => $post['id_komoditas'],
             'jumlah' => $post['jumlah'],
             'kode_desa' => $post['kode_desa'],
+            'jenis_kelamin' => $post['jkel'],
+            'umur' => $post['umur'],
             'id_user' => $this->session->userdata('id_user')
         ];
         $this->Masuk_model->insert($data);
