@@ -344,6 +344,7 @@ class Keluar extends CI_Controller {
                 $this->Keluar_model->insert($data_insert);
             }
         }
+        $this->db->query("CALL sp_rekap_populasi('".$bulan."', '".$tahun."')");
         redirect('keluar');
     }
 

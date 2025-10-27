@@ -289,6 +289,7 @@ class Pemotongan extends CI_Controller {
                 $this->Pemotongan_model->insert($data_insert);
             }
         }
+        $this->db->query("CALL sp_rekap_populasi('".$bulan."', '".$tahun."')");
         redirect('pemotongan');
     }
 

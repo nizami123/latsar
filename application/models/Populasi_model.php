@@ -95,7 +95,7 @@ class Populasi_model extends CI_Model {
         GROUP BY id_wilayah, id_komoditas
         ) pm ON pm.id_wilayah = d.id_wilayah AND pm.id_komoditas = k.id_komoditas
         WHERE k.urut IS NOT NULL and d.urut < 100
-        ORDER BY k.urut asc;";
+        ORDER BY d.urut ASC, k.urut ASC";
         return $this->db->query($query)->result_array();
     }
 

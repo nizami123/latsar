@@ -344,6 +344,7 @@ class Masuk extends CI_Controller {
                 $this->Masuk_model->insert($data_insert);
             }
         }
+        $this->db->query("CALL sp_rekap_populasi('".$bulan."', '".$tahun."')");
         redirect('masuk');
     }
 
