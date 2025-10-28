@@ -406,10 +406,10 @@
 }
 
 // Setup semua filter
-setupFilter('#btnFilterPopulasi', '#filterBulanPopulasi', '#filterTahunPopulasi', '#populasiBody', "<?= base_url('rekap/get_data_populasi') ?>");
-setupFilter('#btnFilterMasuk', '#filterBulanMasuk', '#filterTahunMasuk', '#masukBody', "<?= base_url('rekap/get_data_masuk') ?>");
-setupFilter('#btnFilterKeluar', '#filterBulanKeluar', '#filterTahunKeluar', '#keluarBody', "<?= base_url('rekap/get_data_keluar') ?>");
-setupFilter('#btnFilterKelahiran', '#filterBulanKelahiran', '#filterTahunKelahiran', '#kelahiranBody', "<?= base_url('rekap/get_data_kelahiran') ?>");
-setupFilter('#btnFilterKematian', '#filterBulanKematian', '#filterTahunKematian', '#kematianBody', "<?= base_url('rekap/get_data_kematian') ?>");
-setupFilter('#btnFilterPemotongan','#filterBulanPemotongan','#filterTahunPemotongan','#pemotonganBody',"<?= base_url('rekap/get_data_pemotongan') ?>");
+setupFilter('#btnFilterPopulasi', '#filterBulanPopulasi', '#filterTahunPopulasi', '#populasiBody', "<?= base_url('kecamatan/get_data_populasi') ?>");
+setupFilter('#btnFilterMasuk', '#filterBulanMasuk', '#filterTahunMasuk', '#masukBody', "<?= base_url('kecamatan/get_data_masuk') ?>");
+setupFilter('#btnFilterKeluar', '#filterBulanKeluar', '#filterTahunKeluar', '#keluarBody', "<?= base_url('kecamatan/get_data_keluar') ?>");
+setupFilter('#btnFilterKelahiran', '#filterBulanKelahiran', '#filterTahunKelahiran', '#kelahiranBody', "<?= base_url('kecamatan/get_data_kelahiran') ?>");
+setupFilter('#btnFilterKematian', '#filterBulanKematian', '#filterTahunKematian', '#kematianBody', "<?= base_url('kecamatan/get_data_kematian') ?>");
+setupFilter('#btnFilterPemotongan','#filterBulanPemotongan','#filterTahunPemotongan','#pemotonganBody',"<?= base_url('kecamatan/get_data_pemotongan') ?>");
 </script>

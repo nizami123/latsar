@@ -26,17 +26,23 @@
             <h6 class="m-0">Update Harga Komoditas per <span style="font-weight: bold"><?= date('d F Y', strtotime($last_date)) ?></span></h6><br>
         </div><!-- /.col -->
         <div class="row">
-          <?php foreach ($harga as $h): ?>
-            <div class="col-12 col-sm-6 col-md-2">
-              <div class="info-box">
-
-                <div class="info-box-content">
-                  <span class="info-box-text"><?= $h->nama_komoditas ?></span>
-                  <span class="info-box-number"><?= number_format($h->harga, 0, ',', '.') ?> / <?= $h->satuan ?></span>
+          <?php 
+            $colors = ['#f39c12', '#00c0ef', '#00a65a', '#dd4b39', '#605ca8', '#f012be']; // array warna
+            $i = 0;
+            ?>
+            <?php foreach ($harga as $h): ?>
+                <?php $color = $colors[$i % count($colors)]; // ambil warna bergiliran ?>
+                <div class="col-12 col-sm-6 col-md-2">
+                    <div class="info-box" style="background-color: <?= $color ?>; color: #fff;">
+                        <div class="info-box-content">
+                            <span class="info-box-text"><?= $h->nama_komoditas ?></span>
+                            <span class="info-box-number"><?= number_format($h->harga, 0, ',', '.') ?> / <?= $h->satuan ?></span>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            </div>
-          <?php endforeach; ?>
+                <?php $i++; ?>
+            <?php endforeach; ?>
+
         </div>
       </div>
     </section>
