@@ -41,6 +41,7 @@ class Rekap extends CI_Controller {
         $this->db->order_by('bulan', 'DESC');
         $this->db->limit(1);
         $latest = $this->db->get()->row_array();
+        // print_r($latest);die;
 
         if (!$latest) {
             // Kalau data kosong, kembalikan array kosong
@@ -57,7 +58,7 @@ class Rekap extends CI_Controller {
         $tahun = (int)$latest['tahun'];
 
         // Tambah 1 bulan
-        $bulan++;
+        // $bulan++;
         if ($bulan > 12) {
             $bulan = 1;
             $tahun++;
@@ -66,7 +67,7 @@ class Rekap extends CI_Controller {
         // Format bulan menjadi 2 digit
         $bulan = str_pad($bulan, 2, '0', STR_PAD_LEFT);
         // Ambil data populasi untuk bulan dan tahun tersebut
-        $raw_data = $this->Populasi_model->get_pivot_data_new($bulan, $tahun);
+        $raw_data = $this->Populasi_model->get_pivot_data($bulan, $tahun);
 
         $pivot = [];
         $komoditasList = [];
@@ -83,6 +84,7 @@ class Rekap extends CI_Controller {
             $pivot[$kecamatan][$komoditas] = $jumlah;
         }
 
+        // print_r($bulan);die;
         return [
             'pivot' => $pivot,
             'komoditas' => $komoditasList,
@@ -111,7 +113,7 @@ class Rekap extends CI_Controller {
 
     private function getDataPopulasiByMonthYear($bulan, $tahun)
     {
-        $raw_data = $this->Populasi_model->get_pivot_data_new($bulan, $tahun);
+        $raw_data = $this->Populasi_model->get_pivot_data($bulan, $tahun);
 
         $pivot = [];
         $komoditasList = [];
