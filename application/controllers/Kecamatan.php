@@ -87,7 +87,7 @@ class Kecamatan extends CI_Controller {
 
     private function getDataPopulasiByMonthYear($bulan,$tahun) {
         $raw_data = $this->Populasi_model->get_pivot_data_kecamatan($bulan,$tahun);
-        return $this->preparePivot($raw_data);
+        return $this->preparePivot($raw_data, $bulan, $tahun);
     }
 
     public function get_data_populasi(){
@@ -116,7 +116,7 @@ class Kecamatan extends CI_Controller {
 
     private function getDataMasukByMonthYear($bulan,$tahun) {
         $raw_data = $this->Masuk_model->get_pivot_data_kecamatan($bulan,$tahun);
-        return $this->preparePivot($raw_data);
+        return $this->preparePivot($raw_data, $bulan, $tahun);
     }
 
     public function get_data_masuk(){
@@ -145,7 +145,7 @@ class Kecamatan extends CI_Controller {
 
     private function getDataKeluarByMonthYear($bulan,$tahun) {
         $raw_data = $this->Keluar_model->get_pivot_data_kecamatan($bulan,$tahun);
-        return $this->preparePivot($raw_data);
+        return $this->preparePivot($raw_data, $bulan, $tahun);
     }
 
     public function get_data_keluar(){
@@ -174,7 +174,7 @@ class Kecamatan extends CI_Controller {
 
     private function getDataKelahiranByMonthYear($bulan,$tahun) {
         $raw_data = $this->Kelahiran_model->get_pivot_data_kecamatan($bulan,$tahun);
-        return $this->preparePivot($raw_data);
+        return $this->preparePivot($raw_data, $bulan, $tahun);
     }
 
     public function get_data_kelahiran(){
@@ -203,7 +203,7 @@ class Kecamatan extends CI_Controller {
 
     private function getDataKematianByMonthYear($bulan,$tahun) {
         $raw_data = $this->Kematian_model->get_pivot_data_kecamatan($bulan,$tahun);
-        return $this->preparePivot($raw_data);
+        return $this->preparePivot($raw_data, $bulan, $tahun);
     }
 
     public function get_data_kematian(){
@@ -232,7 +232,7 @@ class Kecamatan extends CI_Controller {
 
     private function getDataPemotonganByMonthYear($bulan,$tahun) {
         $raw_data = $this->Pemotongan_model->get_pivot_data_kecamatan($bulan,$tahun);
-        return $this->preparePivot($raw_data);
+        return $this->preparePivot($raw_data, $bulan, $tahun);
     }
 
     public function get_data_pemotongan(){
@@ -249,7 +249,7 @@ class Kecamatan extends CI_Controller {
     }
 
     /* ===================== UTILITY ===================== */
-    private function preparePivot($raw_data){
+    private function preparePivot($raw_data, $bulan, $tahun) {
         $pivot = [];
         $komoditasList = [];
         $kecamatanList = [];
@@ -275,8 +275,8 @@ class Kecamatan extends CI_Controller {
         return [
             'pivot'=>$pivot,
             'komoditas'=>$komoditasList,
-            'bulan'=>isset($row['bulan'])?$row['bulan']:null,
-            'tahun'=>isset($row['tahun'])?$row['tahun']:null
+            'bulan'=>isset($bulan)?$bulan:null,
+            'tahun'=>isset($tahun)?$tahun:null
         ];
     }
 }

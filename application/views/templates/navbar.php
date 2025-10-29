@@ -127,6 +127,7 @@
           </a>
         </li>
 
+        <?php if ($this->session->userdata('jabatan') == 'Admin Dinas'): ?>
         <li class="nav-item">
           <a href="<?= base_url('produksi') ?>" 
             class="nav-link <?= ($this->uri->segment(1) == 'produksi') ? 'active' : '' ?>">
@@ -134,6 +135,7 @@
             <p>PRODUKSI</p>
           </a>
         </li>
+        <?php endif; ?>
 
         
         <!-- <li class="nav-item">
