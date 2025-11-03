@@ -265,7 +265,7 @@
 <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
 <script src="<?=base_url()?>assets/js/pages/dashboard2.js"></script>
 
-<!-- <script>
+<script>
       var areaChartData = {
       labels  : ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
       datasets: [
@@ -332,7 +332,7 @@
       options: produksiChartOptions
     })
 
-</script> -->
+</script>
 </body>
 </html>
 
