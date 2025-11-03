@@ -23,17 +23,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-if (isset($_SERVER['HTTP_HOST'])) {
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+// if (isset($_SERVER['HTTP_HOST'])) {
+//     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 
-    // ambil path aplikasi dari SCRIPT_NAME, misal /latsar/index.php jadi /latsar/
-    $path = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/';
+//     // ambil path aplikasi dari SCRIPT_NAME, misal /latsar/index.php jadi /latsar/
+//     $path = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/';
 
-    $config['base_url'] = $protocol . '://' . $_SERVER['HTTP_HOST'] . $path;
-} else {
+//     $config['base_url'] = $protocol . '://' . $_SERVER['HTTP_HOST'] . $path;
+// } else {
     // fallback
-    $config['base_url'] = 'http://localhost/latsar/';
-}
+    $config['base_url'] = 'https://siternal.my.id/';
+// }
 
 /*
 |--------------------------------------------------------------------------
