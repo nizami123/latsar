@@ -30,15 +30,30 @@ class Populasi_model extends CI_Model {
         $this->db->select('
             w.nama_wilayah AS kecamatan,
             k.nama_komoditas,
-            SUM(p.jumlah) AS jumlah
+            p.jenis_kelamin,
+            p.umur,
+            SUM(p.jumlah) AS jumlah,
+            (SELECT COUNT(*) 
+                FROM trx_masuk m
+                WHERE m.bulan = '.$bulan.' 
+                AND m.tahun = '.$tahun.'
+                AND m.id_wilayah = p.id_wilayah
+            ) AS hitung
         ');
         $this->db->from('trx_populasi p');
         $this->db->join('master_wilayah w', 'p.id_wilayah = w.id_wilayah');
         $this->db->join('master_komoditas k', 'p.id_komoditas = k.id_komoditas');
         $this->db->where('p.bulan', $bulan);
         $this->db->where('p.tahun', $tahun);
-        $this->db->group_by(['p.id_wilayah', 'p.id_komoditas', 'w.nama_wilayah', 'k.nama_komoditas']);
-        $this->db->order_by('k.urut'); // agar komoditas urut sesuai master
+        $this->db->group_by([
+            'p.id_wilayah',
+            'p.id_komoditas',
+            'w.nama_wilayah',
+            'k.nama_komoditas',
+            'p.jenis_kelamin',
+            'p.umur'
+        ]);
+        $this->db->order_by('k.urut', 'ASC');
         return $this->db->get()->result_array();
     }
 

@@ -282,6 +282,15 @@ class Masuk extends CI_Controller {
         // Ambil data mulai baris ke-4, reindex array
         $sheet_data = array_slice($sheet, 4);
 
+        $kecamatan = $this->db->get_where('master_wilayah', [
+                        'kode' => $this->session->userdata('kode')
+                    ])->row();
+
+        $this->db->where('bulan', $bulan);
+        $this->db->where('tahun', $tahun);
+        $this->db->where('id_wilayah', $kecamatan->id_wilayah);
+        $this->db->delete('trx_masuk');
+
         foreach ($sheet_data as $row) {
             $nama_wilayah = trim($row['A']);
             if (empty($nama_wilayah)) continue;

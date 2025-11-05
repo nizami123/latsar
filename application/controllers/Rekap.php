@@ -33,58 +33,75 @@ class Rekap extends CI_Controller {
         $this->load->view('rekap', $data);
     }
 
-    private function getDataPopulasi() {
-        // Ambil bulan dan tahun terbaru dari tabel trx_populasi
-        $this->db->select('tahun, bulan');
-        $this->db->from('trx_populasi');
-        $this->db->order_by('tahun', 'DESC');
-        $this->db->order_by('bulan', 'DESC');
-        $this->db->limit(1);
-        $latest = $this->db->get()->row_array();
-        // print_r($latest);die;
+    private function getDataPopulasi($bulan = null, $tahun = null)
+    {
+        // Jika bulan/tahun tidak diberikan, ambil dari data trx_populasi terbaru
+        if (is_null($bulan) || is_null($tahun)) {
+            $this->db->select('tahun, bulan');
+            $this->db->from('trx_populasi');
+            $this->db->order_by('tahun', 'DESC');
+            $this->db->order_by('bulan', 'DESC');
+            $this->db->limit(1);
+            $latest = $this->db->get()->row_array();
 
-        if (!$latest) {
-            // Kalau data kosong, kembalikan array kosong
-            return [
-                'pivot' => [],
-                'komoditas' => [],
-                'bulan' => null,
-                'tahun' => null
-            ];
+            if (!$latest) {
+                return [
+                    'pivot' => [],
+                    'komoditas' => [],
+                    'bulan' => null,
+                    'tahun' => null
+                ];
+            }
+
+            $bulan = (int)$latest['bulan'];
+            $tahun = (int)$latest['tahun'];
+
+            // Jika bulan > 12, reset ke 1 dan tambah tahun
+            if ($bulan > 12) {
+                $bulan = 1;
+                $tahun++;
+            }
         }
 
-        // Ambil bulan dan tahun terakhir
-        $bulan = (int)$latest['bulan'];
-        $tahun = (int)$latest['tahun'];
-
-        // Tambah 1 bulan
-        // $bulan++;
-        if ($bulan > 12) {
-            $bulan = 1;
-            $tahun++;
-        }
-
-        // Format bulan menjadi 2 digit
         $bulan = str_pad($bulan, 2, '0', STR_PAD_LEFT);
-        // Ambil data populasi untuk bulan dan tahun tersebut
+
+        // Ambil data pivot dari model
         $raw_data = $this->Populasi_model->get_pivot_data($bulan, $tahun);
 
         $pivot = [];
         $komoditasList = [];
+        $kecamatanList = [];
 
         foreach ($raw_data as $row) {
-            $kecamatan = $row['kecamatan'];
-            $komoditas = $row['nama_komoditas'];
-            $jumlah = $row['jumlah'];
+            $kecamatan     = $row['kecamatan'];
+            $komoditas     = $row['nama_komoditas'];
+            $jenis_kelamin = $row['jenis_kelamin'];
+            $umur          = $row['umur'];
+            $jumlah        = $row['jumlah'];
+            $hitung        = $row['hitung'];
 
-            if (!in_array($komoditas, $komoditasList)) {
-                $komoditasList[] = $komoditas;
+            // Tambahkan ke list komoditas & kecamatan
+            if (!in_array($komoditas, $komoditasList)) $komoditasList[] = $komoditas;
+            if (!in_array($kecamatan, $kecamatanList)) $kecamatanList[] = $kecamatan;
+
+            $pivot[$kecamatan]['status'] = $hitung ? 1 : 0;
+            // Jika jenis_kelamin & umur kosong → langsung merge
+            if (empty($jenis_kelamin) && empty($umur)) {
+                $pivot[$kecamatan][$komoditas] = ($pivot[$kecamatan][$komoditas] ?? 0) + $jumlah;
+                continue;
             }
 
-            $pivot[$kecamatan][$komoditas] = $jumlah;
-        }
+            // Inisialisasi array bertingkat jika belum ada
+            if (!isset($pivot[$kecamatan][$komoditas])) {
+                $pivot[$kecamatan][$komoditas] = [];
+            }
+            if (!isset($pivot[$kecamatan][$komoditas][$jenis_kelamin])) {
+                $pivot[$kecamatan][$komoditas][$jenis_kelamin] = [];
+            }
 
-        // print_r($bulan);die;
+            $pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur] = $jumlah;
+        }
+        ksort($pivot);
         return [
             'pivot' => $pivot,
             'komoditas' => $komoditasList,
@@ -93,23 +110,24 @@ class Rekap extends CI_Controller {
         ];
     }
 
-    public function get_data_populasi(){
+
+    public function get_data_populasi()
+    {
         $bulan = $this->input->get('bulan') ?: date('n');
         $tahun = $this->input->get('tahun') ?: date('Y');
 
-        // Ambil data pivot dari fungsi private
-        $data = $this->getDataPopulasiByMonthYear($bulan, $tahun);
-
+        $data = $this->getDataPopulasi($bulan, $tahun);
         $this->output
             ->set_content_type('application/json')
             ->set_output(json_encode([
                 'bulan'      => $data['bulan'],
                 'tahun'      => $data['tahun'],
                 'nama_bulan' => nama_bulan($data['bulan']),
-                'komoditas'  => $data['komoditas'],  // array nama komoditas
-                'populasi'   => $data['pivot']       // array pivot [kecamatan][komoditas] => jumlah
-        ]));
+                'komoditas'  => $data['komoditas'],
+                'populasi'   => $data['pivot']
+            ]));
     }
+
 
     private function getDataPopulasiByMonthYear($bulan, $tahun)
     {
@@ -119,33 +137,32 @@ class Rekap extends CI_Controller {
         $komoditasList = [];
         $kecamatanList = [];
 
-        // Pertama: kumpulkan semua komoditas & kecamatan
         foreach ($raw_data as $row) {
-            $kecamatan = $row['kecamatan'];
-            $komoditas = $row['nama_komoditas'];
+            $kecamatan     = $row['kecamatan'];
+            $komoditas     = $row['nama_komoditas'];
+            $jenis_kelamin = $row['jenis_kelamin'];
+            $umur          = $row['umur'];
+            $jumlah        = $row['jumlah'];
 
-            if (!in_array($komoditas, $komoditasList)) {
-                $komoditasList[] = $komoditas;
+            // Tambahkan ke list komoditas & kecamatan
+            if (!in_array($komoditas, $komoditasList)) $komoditasList[] = $komoditas;
+            if (!in_array($kecamatan, $kecamatanList)) $kecamatanList[] = $kecamatan;
+
+            // Jika jenis_kelamin & umur kosong → langsung merge
+            if (empty($jenis_kelamin) && empty($umur)) {
+                $pivot[$kecamatan][$komoditas] = ($pivot[$kecamatan][$komoditas] ?? 0) + $jumlah;
+                continue;
             }
 
-            if (!in_array($kecamatan, $kecamatanList)) {
-                $kecamatanList[] = $kecamatan;
+            // Inisialisasi array bertingkat jika belum ada
+            if (!isset($pivot[$kecamatan][$komoditas])) {
+                $pivot[$kecamatan][$komoditas] = [];
             }
-        }
-
-        // Inisialisasi semua pivot dengan 0
-        foreach ($kecamatanList as $kec) {
-            foreach ($komoditasList as $kom) {
-                $pivot[$kec][$kom] = 0;
+            if (!isset($pivot[$kecamatan][$komoditas][$jenis_kelamin])) {
+                $pivot[$kecamatan][$komoditas][$jenis_kelamin] = [];
             }
-        }
 
-        // Masukkan data yang ada
-        foreach ($raw_data as $row) {
-            $kec = $row['kecamatan'];
-            $kom = $row['nama_komoditas'];
-            $jumlah = $row['jumlah'];
-            $pivot[$kec][$kom] = $jumlah;
+            $pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur] = $jumlah;
         }
 
         return [
@@ -155,6 +172,7 @@ class Rekap extends CI_Controller {
             'tahun' => $tahun
         ];
     }
+
 
 
      private function getDataPemotongan() {
