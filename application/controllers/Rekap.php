@@ -77,7 +77,7 @@ class Rekap extends CI_Controller {
             $komoditas     = $row['nama_komoditas'];
             $jenis_kelamin = $row['jenis_kelamin'];
             $umur          = $row['umur'];
-            $jumlah        = $row['jumlah'];
+            $jumlah        = abs($row['jumlah']);
             $hitung        = $row['hitung'];
 
             // Tambahkan ke list komoditas & kecamatan
