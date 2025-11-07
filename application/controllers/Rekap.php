@@ -156,34 +156,36 @@ class Rekap extends CI_Controller {
 
         $excel = new PHPExcel();
         $sheet = $excel->getActiveSheet();
-        $bulanNama = nama_bulan((int)$bulan); 
+        $bulanNama = nama_bulan((int)$bulan);
         $sheet->setTitle($bulanNama . ' ' . $tahun);
 
         // ===== HEADER =====
         $rowNum = 1;
         $col = 0;
         $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Kecamatan');
-
-        // Merge 3 baris ke bawah
         $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 2);
-
-        // Rata tengah horizontal & vertikal
         $sheet->getStyleByColumnAndRow($col, $rowNum)
             ->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER)
             ->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
         $sheet->getColumnDimensionByColumn($col)->setWidth(20);
         $col++;
 
-
+        // Baris 1 Header Komoditas
         foreach ($populasiKomoditas as $kom) {
             if (in_array($kom, $komoditasBertingkat)) {
                 if (!empty($komoditasAdaUmur[$kom])) {
                     $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col + 5, $rowNum);
+                    $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom);
+                    $col += 6;
                 } else {
                     $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col + 1, $rowNum);
+                    $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom);
+                    $col += 2;
                 }
-                $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom);
-                $col += empty($komoditasAdaUmur[$kom]) ? 2 : 6;
+                // Tambahkan kolom total (1 kolom tambahan)
+                $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 2);
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom . ' Total');
+                $col++;
             } else {
                 $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 2);
                 $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom);
@@ -193,7 +195,7 @@ class Rekap extends CI_Controller {
 
         // Sub-header: Jantan/Betina & umur
         $rowNum++;
-        $col = 1; // kolom setelah Kecamatan
+        $col = 1;
         foreach ($populasiKomoditas as $kom) {
             if (in_array($kom, $komoditasBertingkat)) {
                 if (!empty($komoditasAdaUmur[$kom])) {
@@ -202,12 +204,16 @@ class Rekap extends CI_Controller {
                         $sheet->setCellValueByColumnAndRow($col, $rowNum, $jk);
                         $col += 3;
                     }
+                    // Skip kolom total (tidak ada subheader)
+                    $col++;
                 } else {
                     foreach (['Jantan','Betina'] as $jk) {
                         $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 1);
                         $sheet->setCellValueByColumnAndRow($col, $rowNum, $jk);
                         $col++;
                     }
+                    // Skip kolom total
+                    $col++;
                 }
             }
         }
@@ -223,6 +229,8 @@ class Rekap extends CI_Controller {
                         $col++;
                     }
                 }
+                // Skip kolom total
+                $col++;
             }
         }
 
@@ -255,12 +263,14 @@ class Rekap extends CI_Controller {
             $col++;
 
             foreach ($populasiKomoditas as $kom) {
+                $totalKomoditasRow = 0;
                 if (in_array($kom, $komoditasBertingkat)) {
                     if (!empty($komoditasAdaUmur[$kom])) {
                         foreach (['Jantan','Betina'] as $jk) {
                             foreach ($umurList as $umur) {
                                 $val = isset($row[$kom][$jk][$umur]) ? (int)$row[$kom][$jk][$umur] : 0;
                                 $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
+                                $totalKomoditasRow += $val;
                                 $totalPerKomoditas[$kom][$jk][$umur] = ($totalPerKomoditas[$kom][$jk][$umur] ?? 0) + $val;
                                 $col++;
                             }
@@ -269,10 +279,14 @@ class Rekap extends CI_Controller {
                         foreach (['Jantan','Betina'] as $jk) {
                             $val = isset($row[$kom][$jk]) ? (int)$row[$kom][$jk] : 0;
                             $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
+                            $totalKomoditasRow += $val;
                             $totalPerKomoditas[$kom][$jk] = ($totalPerKomoditas[$kom][$jk] ?? 0) + $val;
                             $col++;
                         }
                     }
+                    // Kolom total untuk komoditas ini
+                    $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalKomoditasRow);
+                    $col++;
                 } else {
                     $val = isset($row[$kom]) ? (int)$row[$kom] : 0;
                     $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
@@ -280,7 +294,7 @@ class Rekap extends CI_Controller {
                     $col++;
                 }
             }
-            // Zebra stripe
+
             if ($rowNum % 2 == 0) {
                 $sheet->getStyle("A{$rowNum}:{$lastCol}{$rowNum}")->getFill()
                     ->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
@@ -294,67 +308,35 @@ class Rekap extends CI_Controller {
         $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Total');
         $col++;
         foreach ($populasiKomoditas as $kom) {
+            $totalKomoditasAll = 0;
             if (in_array($kom, $komoditasBertingkat)) {
                 if (!empty($komoditasAdaUmur[$kom])) {
                     foreach (['Jantan','Betina'] as $jk) {
                         foreach ($umurList as $umur) {
-                            $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalPerKomoditas[$kom][$jk][$umur] ?? 0);
+                            $val = $totalPerKomoditas[$kom][$jk][$umur] ?? 0;
+                            $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
+                            $totalKomoditasAll += $val;
                             $col++;
                         }
                     }
                 } else {
                     foreach (['Jantan','Betina'] as $jk) {
-                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalPerKomoditas[$kom][$jk] ?? 0);
+                        $val = $totalPerKomoditas[$kom][$jk] ?? 0;
+                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
+                        $totalKomoditasAll += $val;
                         $col++;
                     }
                 }
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalKomoditasAll);
+                $col++;
             } else {
                 $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalPerKomoditas[$kom] ?? 0);
                 $col++;
             }
         }
-        // Total row styling
         $sheet->getStyle("A{$rowNum}:{$lastCol}{$rowNum}")->applyFromArray([
             'font' => ['bold' => true],
             'fill' => ['type'=>PHPExcel_Style_Fill::FILL_SOLID, 'color'=>['rgb'=>'D9D9D9']]
-        ]);
-
-        // ===== GRAND TOTAL =====
-        $rowNum++;
-        $col = 0;
-        $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Grand Total');
-        $col++;
-        foreach ($populasiKomoditas as $kom) {
-            if (in_array($kom, $komoditasBertingkat)) {
-                if (!empty($komoditasAdaUmur[$kom])) {
-                    $total = 0;
-                    foreach (['Jantan','Betina'] as $jk) {
-                        foreach ($umurList as $umur) {
-                            $total += $totalPerKomoditas[$kom][$jk][$umur] ?? 0;
-                        }
-                    }
-                    $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col + 5, $rowNum);
-                    $sheet->setCellValueByColumnAndRow($col, $rowNum, $total);
-                    $startCol = PHPExcel_Cell::stringFromColumnIndex($col);
-                    $endCol = PHPExcel_Cell::stringFromColumnIndex($col + 5);
-                    $sheet->getStyle("{$startCol}{$rowNum}:{$endCol}{$rowNum}")
-                        ->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
-
-                    $col += 6;
-                } else {
-                    foreach (['Jantan','Betina'] as $jk) {
-                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalPerKomoditas[$kom][$jk] ?? 0);
-                        $col++;
-                    }
-                }
-            } else {
-                $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalPerKomoditas[$kom] ?? 0);
-                $col++;
-            }
-        }
-        $sheet->getStyle("A{$rowNum}:{$lastCol}{$rowNum}")->applyFromArray([
-            'font' => ['bold' => true],
-            'fill' => ['type'=>PHPExcel_Style_Fill::FILL_SOLID, 'color'=>['rgb'=>'D9D9D9']],
         ]);
 
         // ===== DOWNLOAD =====
@@ -366,7 +348,6 @@ class Rekap extends CI_Controller {
         $objWriter->save('php://output');
         exit;
     }
-
 
     private function getDataPopulasiByMonthYear($bulan, $tahun)
     {
