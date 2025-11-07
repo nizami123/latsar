@@ -252,6 +252,7 @@ class Rekap extends CI_Controller {
                 'allborders' => ['style' => PHPExcel_Style_Border::BORDER_THIN]
             ]
         ]);
+        $sheet->freezePane('B' . ($rowNum + 1));
 
         // ===== BODY =====
         $rowNum++;
