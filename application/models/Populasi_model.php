@@ -33,12 +33,18 @@ class Populasi_model extends CI_Model {
             p.jenis_kelamin,
             p.umur,
             SUM(p.jumlah) AS jumlah,
-            (SELECT COUNT(*) 
-                FROM trx_masuk m
-                WHERE m.bulan = '.$bulan.' 
-                AND m.tahun = '.$tahun.'
-                AND m.id_wilayah = p.id_wilayah
-            ) AS hitung
+            CASE 
+                WHEN ('.$tahun.' < 2025) 
+                    OR ('.$tahun.' = 2025 AND '.$bulan.' < 10)
+                THEN 1
+                ELSE (
+                    SELECT COUNT(*) 
+                    FROM trx_masuk m
+                    WHERE m.bulan = '.$bulan.'
+                    AND m.tahun = '.$tahun.'
+                    AND m.id_wilayah = p.id_wilayah
+                )
+            END AS hitung
         ');
         $this->db->from('trx_populasi p');
         $this->db->join('master_wilayah w', 'p.id_wilayah = w.id_wilayah');
