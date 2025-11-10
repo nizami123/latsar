@@ -114,93 +114,93 @@
 
           <div class="card-body">
           <div class="table-responsive">
+            <div class="table-responsive">
             <table id="populasiDashboard" class="table table-bordered table-striped table-sm">
               <thead style="background-color: black; color: white;">
                 <tr>
-                    <th rowspan="3" style="min-width:150px; text-align:center;">Kecamatan</th>
+                  <th rowspan="3" style="min-width:150px; text-align:center;">Kecamatan</th>
 
-                    <?php
-                    $umurList = ['Anak', 'Muda', 'Dewasa'];
-                    $komoditasBertingkat = [];
-                    $komoditasAdaUmur = [];
+                  <?php
+                  $umurList = ['Anak', 'Muda', 'Dewasa'];
+                  $komoditasBertingkat = [];
+                  $komoditasAdaUmur = [];
 
-                    // Komoditas khusus
-                    $khususJk = ['Kerbau', 'Kuda'];
-                    $paksaUmur = ['Sapi Potong', 'Sapi Perah'];
+                  // Komoditas khusus
+                  $khususJk = ['Kerbau', 'Kuda'];
+                  $paksaUmur = ['Sapi Potong', 'Sapi Perah'];
 
-                    // Deteksi otomatis komoditas bertingkat
-                    foreach ($populasiKomoditas as $kom) {
-                        foreach ($populasiPivot as $kec => $dataKec) {
-                            if (isset($dataKec[$kom]) && is_array($dataKec[$kom])) {
-                                $first = reset($dataKec[$kom]);
-                                if (is_array($first)) {
-                                    $komoditasBertingkat[] = $kom;
+                  // Deteksi otomatis komoditas bertingkat
+                  foreach ($populasiKomoditas as $kom) {
+                      foreach ($populasiPivot as $kec => $dataKec) {
+                          if (isset($dataKec[$kom]) && is_array($dataKec[$kom])) {
+                              $first = reset($dataKec[$kom]);
+                              if (is_array($first)) {
+                                  $komoditasBertingkat[] = $kom;
 
-                                    if (in_array($kom, $khususJk)) {
-                                        $komoditasAdaUmur[$kom] = false; // Jantan/Betina saja
-                                    } elseif (in_array($kom, $paksaUmur)) {
-                                        $komoditasAdaUmur[$kom] = true; // Paksa 3 tingkat umur
-                                    } else {
-                                        $hasUmur = false;
-                                        foreach (['Jantan','Betina'] as $jk) {
-                                            if (isset($first[$jk]) && is_array($first[$jk]) && count($first[$jk]) > 0) {
-                                                $hasUmur = true;
-                                                break;
-                                            }
-                                        }
-                                        $komoditasAdaUmur[$kom] = $hasUmur;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    $komoditasBertingkat = array_unique($komoditasBertingkat);
-                    ?>
+                                  if (in_array($kom, $khususJk)) {
+                                      $komoditasAdaUmur[$kom] = false; // Jantan/Betina saja
+                                  } elseif (in_array($kom, $paksaUmur)) {
+                                      $komoditasAdaUmur[$kom] = true; // Paksa 3 tingkat umur
+                                  } else {
+                                      $hasUmur = false;
+                                      foreach (['Jantan','Betina'] as $jk) {
+                                          if (isset($first[$jk]) && is_array($first[$jk]) && count($first[$jk]) > 0) {
+                                              $hasUmur = true;
+                                              break;
+                                          }
+                                      }
+                                      $komoditasAdaUmur[$kom] = $hasUmur;
+                                  }
+                              }
+                          }
+                      }
+                  }
+                  $komoditasBertingkat = array_unique($komoditasBertingkat);
+                  ?>
 
-                    <?php foreach ($populasiKomoditas as $kom): ?>
-                        <?php if (in_array($kom, $komoditasBertingkat)): ?>
-                            <?php if (!empty($komoditasAdaUmur[$kom])): ?>
-                                <th colspan="6" style="text-align:center;"><?= $kom ?></th>
-                            <?php else: ?>
-                                <th colspan="2" style="text-align:center;"><?= $kom ?></th>
-                            <?php endif; ?>
-                        <?php else: ?>
-                            <th rowspan="3" style="text-align:center;"><?= $kom ?></th>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </tr>
-
-                <tr>
                   <?php foreach ($populasiKomoditas as $kom): ?>
-                      <?php if (in_array($kom, $komoditasBertingkat)): ?>
-                          <?php if (!empty($komoditasAdaUmur[$kom])): ?>
-                              <!-- Ada umur → colspan 3 -->
-                              <th colspan="3" style="text-align:center;">Jantan</th>
-                              <th colspan="3" style="text-align:center;">Betina</th>
-                          <?php else: ?>
-                              <!-- Tidak ada umur → rowspan 2 -->
-                              <th rowspan="2" style="text-align:center;">Jantan</th>
-                              <th rowspan="2" style="text-align:center;">Betina</th>
-                          <?php endif; ?>
+                    <?php if (in_array($kom, $komoditasBertingkat)): ?>
+                      <?php if (!empty($komoditasAdaUmur[$kom])): ?>
+                        <th colspan="7" style="text-align:center;"><?= $kom ?></th>
+                      <?php else: ?>
+                        <th colspan="3" style="text-align:center;"><?= $kom ?></th>
                       <?php endif; ?>
+                    <?php else: ?>
+                      <th rowspan="3" style="text-align:center;"><?= $kom ?></th>
+                    <?php endif; ?>
                   <?php endforeach; ?>
                 </tr>
 
+                <tr>
+                  <?php foreach ($populasiKomoditas as $kom): ?>
+                    <?php if (in_array($kom, $komoditasBertingkat)): ?>
+                      <?php if (!empty($komoditasAdaUmur[$kom])): ?>
+                        <th colspan="3" style="text-align:center;">Jantan</th>
+                        <th colspan="3" style="text-align:center;">Betina</th>
+                        <th rowspan="2" style="text-align:center; background-color: black;">Total</th>
+                      <?php else: ?>
+                        <th rowspan="2" style="text-align:center;">Jantan</th>
+                        <th rowspan="2" style="text-align:center;">Betina</th>
+                        <th rowspan="2" style="text-align:center; background-color: black;">Total</th>
+                      <?php endif; ?>
+                    <?php endif; ?>
+                  <?php endforeach; ?>
+                </tr>
 
                 <tr>
                   <?php foreach ($populasiKomoditas as $kom): ?>
-                      <?php if (in_array($kom, $komoditasBertingkat) && !empty($komoditasAdaUmur[$kom])): ?>
-                          <?php foreach (['Jantan','Betina'] as $jk): ?>
-                              <?php foreach ($umurList as $umur): ?>
-                                  <th style="text-align:center;"><?= $umur ?></th>
-                              <?php endforeach; ?>
-                          <?php endforeach; ?>
-                      <?php endif; ?>
+                    <?php if (in_array($kom, $komoditasBertingkat) && !empty($komoditasAdaUmur[$kom])): ?>
+                      <?php foreach (['Jantan','Betina'] as $jk): ?>
+                        <?php foreach ($umurList as $umur): ?>
+                          <th style="text-align:center;"><?= $umur ?></th>
+                        <?php endforeach; ?>
+                      <?php endforeach; ?>
+                    <?php endif; ?>
                   <?php endforeach; ?>
                 </tr>
               </thead>
 
-            <tbody id="populasiBody">
+              <tbody id="populasiBody">
                 <?php
                 $totalPerKomoditas = [];
                 foreach ($populasiKomoditas as $kom) {
@@ -222,101 +222,95 @@
                 }
                 ?>
 
-            <?php foreach ($populasiPivot as $kec => $row): ?>
-                <tr>
+                <?php foreach ($populasiPivot as $kec => $row): ?>
+                  <tr>
                     <?php 
-                        $status = $row['status'] ?? 0;
-                        $bg = $status ? 'black' : 'red';
-                        $color = $status ? 'white' : 'white';
+                      $status = $row['status'] ?? 0;
+                      $bg = $status ? 'black' : 'red';
+                      $color = $status ? 'white' : 'white';
                     ?>
                     <td style="background-color:<?= $bg ?>; color:<?= $color ?>;">
-                        <?= $kec ?>
+                      <?= $kec ?>
                     </td>
+
                     <?php foreach ($populasiKomoditas as $kom): ?>
-                        <?php if (in_array($kom, $komoditasBertingkat)): ?>
-                            <?php if (!empty($komoditasAdaUmur[$kom])): ?>
-                                <?php foreach (['Jantan','Betina'] as $jk): ?>
-                                    <?php foreach ($umurList as $umur): ?>
-                                        <?php
-                                            $val = isset($row[$kom][$jk][$umur]) ? (int)$row[$kom][$jk][$umur] : 0;
-                                            $totalPerKomoditas[$kom][$jk][$umur] += $val;
-                                        ?>
-                                        <td style="background-color:<?= $bg ?>;text-align:center;"><?= number_format($val) ?></td>
-                                    <?php endforeach; ?>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                              <?php foreach (['Jantan', 'Betina'] as $jk): ?>
-                                  <?php
-                                      $val = 0;
-                                      if (isset($row[$kom][$jk]) && is_array($row[$kom][$jk])) {
-                                          // jumlahkan semua umur
-                                          $val = array_sum($row[$kom][$jk]);
-                                      }
-                                      $totalPerKomoditas[$kom][$jk] += $val;
-                                  ?>
-                                  <td style="background-color:<?= $bg ?>;text-align:center;"><?= number_format($val) ?></td>
-                              <?php endforeach; ?>
-                          <?php endif; ?>
+                      <?php if (in_array($kom, $komoditasBertingkat)): ?>
+                        <?php if (!empty($komoditasAdaUmur[$kom])): ?>
+                          <?php $subtotal = 0; ?>
+                          <?php foreach (['Jantan','Betina'] as $jk): ?>
+                            <?php foreach ($umurList as $umur): ?>
+                              <?php
+                                $val = isset($row[$kom][$jk][$umur]) ? (int)$row[$kom][$jk][$umur] : 0;
+                                $subtotal += $val;
+                                $totalPerKomoditas[$kom][$jk][$umur] += $val;
+                              ?>
+                              <td style="background-color:<?= $bg ?>;text-align:center;"><?= number_format($val) ?></td>
+                            <?php endforeach; ?>
+                          <?php endforeach; ?>
+                          <td style="background-color:<?= $bg ?>;text-align:center; font-weight:bold;"><?= number_format($subtotal) ?></td>
                         <?php else: ?>
+                          <?php $subtotal = 0; ?>
+                          <?php foreach (['Jantan', 'Betina'] as $jk): ?>
                             <?php
-                                $val = isset($row[$kom]) ? (int)$row[$kom] : 0;
-                                $totalPerKomoditas[$kom] += $val;
+                                $val = 0;
+                                if (isset($row[$kom][$jk]) && is_array($row[$kom][$jk])) {
+                                    $val = array_sum($row[$kom][$jk]);
+                                }
+                                $subtotal += $val;
+                                $totalPerKomoditas[$kom][$jk] += $val;
                             ?>
                             <td style="background-color:<?= $bg ?>;text-align:center;"><?= number_format($val) ?></td>
+                          <?php endforeach; ?>
+                          <td style="background-color:<?= $bg ?>;text-align:center; font-weight:bold;"><?= number_format($subtotal) ?></td>
                         <?php endif; ?>
+                      <?php else: ?>
+                        <?php
+                            $val = isset($row[$kom]) ? (int)$row[$kom] : 0;
+                            $totalPerKomoditas[$kom] += $val;
+                        ?>
+                        <td style="background-color:<?= $bg ?>;text-align:center;"><?= number_format($val) ?></td>
+                      <?php endif; ?>
                     <?php endforeach; ?>
-                </tr>
+                  </tr>
                 <?php endforeach; ?>
 
                 <tr style="font-weight:bold; background-color:black; color:white;">
-                    <td>Total</td>
-                    <?php foreach ($populasiKomoditas as $kom): ?>
-                        <?php if (in_array($kom, $komoditasBertingkat)): ?>
-                            <?php if (!empty($komoditasAdaUmur[$kom])): ?>
-                                <?php foreach (['Jantan','Betina'] as $jk): ?>
-                                    <?php foreach ($umurList as $umur): ?>
-                                        <td style="text-align:center;"><?= number_format($totalPerKomoditas[$kom][$jk][$umur]) ?></td>
-                                    <?php endforeach; ?>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <?php foreach (['Jantan','Betina'] as $jk): ?>
-                                    <td style="text-align:center;"><?= number_format($totalPerKomoditas[$kom][$jk]) ?></td>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        <?php else: ?>
-                            <td style="text-align:center;"><?= number_format($totalPerKomoditas[$kom]) ?></td>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </tr>
-                <!-- TOTAL UTAMA DI BAWAH -->
-                <tr style="font-weight:bold; background-color:black; color:white;">
-                    <td></td>
-                    <?php foreach ($populasiKomoditas as $kom): ?>
-                        <?php if (in_array($kom, $komoditasBertingkat)): ?>
-                            <?php if (!empty($komoditasAdaUmur[$kom])): ?>
-                                <?php
-                                    // Total semua umur Jantan + Betina
-                                    $total = 0;
-                                    foreach (['Jantan','Betina'] as $jk) {
-                                        foreach ($umurList as $umur) {
-                                            $total += $totalPerKomoditas[$kom][$jk][$umur];
-                                        }
-                                    }
-                                ?>
-                                <td colspan="6" style="text-align:center;"><?= number_format($total) ?></td>
-                            <?php else: ?>
-                                <?php foreach (['Jantan','Betina'] as $jk): ?>
-                                    <td style="text-align:center;"><?= number_format($totalPerKomoditas[$kom][$jk]) ?></td>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        <?php else: ?>
-                            <td style="text-align:center;"><?= number_format($totalPerKomoditas[$kom]) ?></td>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
+                  <td>Total</td>
+                  <?php foreach ($populasiKomoditas as $kom): ?>
+                    <?php if (in_array($kom, $komoditasBertingkat)): ?>
+                      <?php if (!empty($komoditasAdaUmur[$kom])): ?>
+                        <?php $totalAll = 0; ?>
+                        <?php foreach (['Jantan','Betina'] as $jk): ?>
+                          <?php foreach ($umurList as $umur): ?>
+                            <?php
+                              $val = $totalPerKomoditas[$kom][$jk][$umur];
+                              $totalAll += $val;
+                            ?>
+                            <td style="text-align:center;"><?= number_format($val) ?></td>
+                          <?php endforeach; ?>
+                        <?php endforeach; ?>
+                        <td style="text-align:center; background-color:black;"><?= number_format($totalAll) ?></td>
+                      <?php else: ?>
+                        <?php $totalAll = 0; ?>
+                        <?php foreach (['Jantan','Betina'] as $jk): ?>
+                          <?php
+                            $val = $totalPerKomoditas[$kom][$jk];
+                            $totalAll += $val;
+                          ?>
+                          <td style="text-align:center;"><?= number_format($val) ?></td>
+                        <?php endforeach; ?>
+                        <td style="text-align:center; background-color:black;"><?= number_format($totalAll) ?></td>
+                      <?php endif; ?>
+                    <?php else: ?>
+                      <td style="text-align:center;"><?= number_format($totalPerKomoditas[$kom]) ?></td>
+                    <?php endif; ?>
+                  <?php endforeach; ?>
                 </tr>
 
               </tbody>
             </table>
+          </div>
+
           </div>
 
         </div>
@@ -483,7 +477,6 @@ $(document).ready(function(){
 
             // Inisialisasi total
             res.komoditas.forEach(k => {
-                // cek apakah ini komoditas bertingkat
                 if (komoditasBertingkat.includes(k)) {
                     if (komoditasAdaUmur[k]) {
                         totalPerKomoditas[k] = { 'Jantan': {}, 'Betina': {} };
@@ -501,30 +494,33 @@ $(document).ready(function(){
 
             // Isi data per kecamatan
             $.each(res.populasi, function(kec, row) {
-                // Tentukan warna berdasarkan status
-                let status = row.status ?? 0; // default 0 jika tidak ada
+                let status = row.status ?? 0;
                 let bgColor = status ? 'black' : 'red';
-                let textColor = status ? 'white' : 'white';
-
-                // Baris pertama: kecamatan
+                let textColor = 'white';
                 tbody += `<tr><td style="background-color:${bgColor}; color:${textColor}">${kec}</td>`;
 
                 res.komoditas.forEach(k => {
                     if (komoditasBertingkat.includes(k)) {
                         if (komoditasAdaUmur[k]) {
+                            let subtotal = 0;
                             ['Jantan','Betina'].forEach(jk => {
                                 umurList.forEach(umur => {
                                     let val = parseInt(row[k]?.[jk]?.[umur] || 0);
                                     totalPerKomoditas[k][jk][umur] += val;
+                                    subtotal += val;
                                     tbody += `<td style="background-color:${bgColor};text-align:center">${Number(val).toLocaleString()}</td>`;
                                 });
                             });
+                            tbody += `<td style="background-color:${bgColor};text-align:center; font-weight:bold;">${Number(subtotal).toLocaleString()}</td>`;
                         } else {
+                            let subtotal = 0;
                             ['Jantan','Betina'].forEach(jk => {
-                                let val = parseInt(Object.values(row[k]?.[jk] || {0:0})[0]); // aman
+                                let val = parseInt(Object.values(row[k]?.[jk] || {0:0})[0]);
                                 totalPerKomoditas[k][jk] += val;
+                                subtotal += val;
                                 tbody += `<td style="background-color:${bgColor};text-align:center">${Number(val).toLocaleString()}</td>`;
                             });
+                            tbody += `<td style="background-color:${bgColor};text-align:center; font-weight:bold;">${Number(subtotal).toLocaleString()}</td>`;
                         }
                     } else {
                         let val = parseInt(row[k] || 0);
@@ -536,41 +532,29 @@ $(document).ready(function(){
                 tbody += `</tr>`;
             });
 
-
-            // Total per kategori
+            // Total per kategori (baris hitam)
             tbody += `<tr style="font-weight:bold; background-color:black; color:white"><td>Total</td>`;
             res.komoditas.forEach(k => {
                 if (komoditasBertingkat.includes(k)) {
                     if (komoditasAdaUmur[k]) {
+                        let totalAll = 0;
                         ['Jantan','Betina'].forEach(jk => {
                             umurList.forEach(umur => {
-                                tbody += `<td style="text-align:center">${Number(totalPerKomoditas[k][jk][umur]).toLocaleString()}</td>`;
+                                let val = totalPerKomoditas[k][jk][umur];
+                                totalAll += val;
+                                tbody += `<td style="text-align:center">${Number(val).toLocaleString()}</td>`;
                             });
                         });
+                        tbody += `<td style="text-align:center; background-color:black;">${Number(totalAll).toLocaleString()}</td>`;
                     } else {
+                        let totalAll = 0;
                         ['Jantan','Betina'].forEach(jk => {
-                            tbody += `<td style="text-align:center">${Number(totalPerKomoditas[k][jk]).toLocaleString()}</td>`;
+                            let val = totalPerKomoditas[k][jk];
+                            totalAll += val;
+                            tbody += `<td style="text-align:center">${Number(val).toLocaleString()}</td>`;
                         });
+                        tbody += `<td style="text-align:center; background-color:black;">${Number(totalAll).toLocaleString()}</td>`;
                     }
-                } else {
-                    tbody += `<td style="text-align:center">${Number(totalPerKomoditas[k]).toLocaleString()}</td>`;
-                }
-            });
-            tbody += `</tr>`;
-
-            // Total utama (semua umur dan jenis kelamin)
-            tbody += `<tr style="font-weight:bold; background-color:black; color:white"><td></td>`;
-            res.komoditas.forEach(k => {
-                if (komoditasBertingkat.includes(k) && komoditasAdaUmur[k]) {
-                    let total = 0;
-                    ['Jantan','Betina'].forEach(jk => {
-                        umurList.forEach(umur => total += totalPerKomoditas[k][jk][umur]);
-                    });
-                    tbody += `<td colspan="6" style="text-align:center">${Number(total).toLocaleString()}</td>`;
-                } else if (komoditasBertingkat.includes(k)) {
-                    ['Jantan','Betina'].forEach(jk => {
-                        tbody += `<td style="text-align:center">${Number(totalPerKomoditas[k][jk]).toLocaleString()}</td>`;
-                    });
                 } else {
                     tbody += `<td style="text-align:center">${Number(totalPerKomoditas[k]).toLocaleString()}</td>`;
                 }
@@ -582,8 +566,6 @@ $(document).ready(function(){
         }
     });
   });
-
-
 
   $('#btnPemotonganFilter').on('click', function(){
     let bulan = $('#filterPemotonganBulan').val();
