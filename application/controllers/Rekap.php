@@ -399,7 +399,7 @@ class Rekap extends CI_Controller {
      private function getDataPemotongan() {
         // Ambil bulan dan tahun terbaru dari tabel trx_populasi
         $this->db->select('tahun, bulan');
-        $this->db->from('trx_populasi');
+        $this->db->from('trx_pemotongan');
         $this->db->order_by('tahun', 'DESC');
         $this->db->order_by('bulan', 'DESC');
         $this->db->limit(1);
