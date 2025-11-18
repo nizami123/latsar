@@ -71,36 +71,60 @@ class Rekap extends CI_Controller {
         $pivot = [];
         $komoditasList = [];
         $kecamatanList = [];
+        // var_dump($raw_data); exit;
 
         foreach ($raw_data as $row) {
-            $kecamatan     = $row['kecamatan'];
-            $komoditas     = $row['nama_komoditas'];
-            $jenis_kelamin = $row['jenis_kelamin'];
-            $umur          = $row['umur'];
-            $jumlah        = abs($row['jumlah']);
-            $hitung        = $row['hitung'];
+    $kecamatan     = $row['kecamatan'];
+    $komoditas     = $row['nama_komoditas'];
+    $jenis_kelamin = $row['jenis_kelamin'] ?? '';
+    $umur          = $row['umur'] ?? '';
+    $jumlah        = abs((int)$row['jumlah']); // pastikan integer
+    $hitung        = (int)$row['hitung'];
 
-            // Tambahkan ke list komoditas & kecamatan
-            if (!in_array($komoditas, $komoditasList)) $komoditasList[] = $komoditas;
-            if (!in_array($kecamatan, $kecamatanList)) $kecamatanList[] = $kecamatan;
+    // List komoditas dan kecamatan
+    if (!in_array($komoditas, $komoditasList)) $komoditasList[] = $komoditas;
+    if (!in_array($kecamatan, $kecamatanList)) $kecamatanList[] = $kecamatan;
 
-            $pivot[$kecamatan]['status'] = $hitung ? 1 : 0;
-            // Jika jenis_kelamin & umur kosong → langsung merge
-            if (empty($jenis_kelamin) && empty($umur)) {
-                $pivot[$kecamatan][$komoditas] = ($pivot[$kecamatan][$komoditas] ?? 0) + $jumlah;
-                continue;
-            }
+    // Status
+    $pivot[$kecamatan]['status'] = $hitung ? 1 : 0;
 
-            // Inisialisasi array bertingkat jika belum ada
-            if (!isset($pivot[$kecamatan][$komoditas])) {
-                $pivot[$kecamatan][$komoditas] = [];
-            }
-            if (!isset($pivot[$kecamatan][$komoditas][$jenis_kelamin])) {
-                $pivot[$kecamatan][$komoditas][$jenis_kelamin] = [];
-            }
+    // --------- CASE 1: jenis_kelamin & umur NULL → langsung merge ke komoditas
+    if ($jenis_kelamin === '' && $umur === '') {
 
-            $pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur] = $jumlah;
+        // Jika sebelumnya tipe array, sum harus di level paling luar
+        if (isset($pivot[$kecamatan][$komoditas]) && is_array($pivot[$kecamatan][$komoditas])) {
+            // Jika ingin memaksa sum ke "total", bisa buat key khusus
+            $existingArray = $pivot[$kecamatan][$komoditas];
+            $pivot[$kecamatan][$komoditas] = (isset($existingArray['total']) ? $existingArray['total'] : 0) + $jumlah;
+        } else {
+            // Jika belum ada atau integer
+            $pivot[$kecamatan][$komoditas] = ($pivot[$kecamatan][$komoditas] ?? 0) + $jumlah;
         }
+
+        continue;
+    }
+
+    // --------- CASE 2: Data normal (bertier: komoditas → jenis_kelamin → umur)
+
+    // Jika sebelumnya integer, ubah jadi array
+    if (isset($pivot[$kecamatan][$komoditas]) && !is_array($pivot[$kecamatan][$komoditas])) {
+        $pivot[$kecamatan][$komoditas] = [
+            'total' => $pivot[$kecamatan][$komoditas]   // pindahkan angka ke total
+        ];
+    }
+
+    // Inisialisasi bertingkat
+    if (!isset($pivot[$kecamatan][$komoditas])) {
+        $pivot[$kecamatan][$komoditas] = [];
+    }
+    if (!isset($pivot[$kecamatan][$komoditas][$jenis_kelamin])) {
+        $pivot[$kecamatan][$komoditas][$jenis_kelamin] = [];
+    }
+
+    // Simpan jumlah
+    $pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur] = $jumlah;
+}
+
         ksort($pivot);
         return [
             'pivot' => $pivot,
