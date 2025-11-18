@@ -258,6 +258,12 @@ class Kematian extends CI_Controller {
         $bulan = $this->input->post('bulan');
         $tahun = $this->input->post('tahun');
 
+        if ($tahun < 2025 || ($tahun == 2025 && $bulan < 10)) {
+            $this->session->set_flashdata('error', 'Bulan yang dimasukkan sudah dikunci.');
+            redirect('kematian');
+            return; // hentikan proses
+        }
+
         $file = $_FILES['file_excel']['tmp_name'];
 
         require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';

@@ -227,6 +227,11 @@
       <div class="modal-content">
         <div class="modal-header"><h5 class="modal-title">Upload Excel Kematian</h5></div>
         <div class="modal-body">
+          <?php if ($this->session->flashdata('error')): ?>
+              <div class="alert alert-danger">
+                  <?= $this->session->flashdata('error'); ?>
+              </div>
+          <?php endif; ?>
           <div class="form-group">
             <label>Bulan</label>
             <?= bulan_dropdown('bulan') ?>

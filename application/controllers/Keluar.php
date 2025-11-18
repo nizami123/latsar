@@ -257,6 +257,11 @@ class Keluar extends CI_Controller {
     public function upload_excel() {
         $bulan = $this->input->post('bulan');
         $tahun = $this->input->post('tahun');
+        if ($tahun < 2025 || ($tahun == 2025 && $bulan < 10)) {
+            $this->session->set_flashdata('error', 'Bulan yang dimasukkan sudah dikunci.');
+            redirect('keluar');
+            return; // hentikan proses
+        }
 
         $file = $_FILES['file_excel']['tmp_name'];
 
