@@ -26,20 +26,47 @@ class Pemotongan_model extends CI_Model {
         $this->db->delete('trx_pemotongan');
     }
 
-   public function get_pivot_data($bulan, $tahun)
-    {
-        $this->db->select('w.nama_wilayah AS wilayah, k.nama_komoditas, SUM(p.jumlah) AS jumlah');
+    public function get_pivot_data($bulan, $tahun) {
+        $this->db->select('
+            w.nama_wilayah AS kecamatan,
+            k.nama_komoditas,
+            p.jenis_kelamin,
+            SUM(p.jumlah) AS jumlah,
+            CASE 
+                WHEN (' . $tahun . ' < 2025) 
+                    OR (' . $tahun . ' = 2025 AND ' . $bulan . ' < 10)
+                THEN 1
+                ELSE (
+                    SELECT COUNT(*) 
+                    FROM trx_masuk m
+                    WHERE m.bulan = ' . $bulan . '
+                    AND m.tahun = ' . $tahun . '
+                    AND m.id_wilayah = p.id_wilayah
+                )
+            END AS hitung
+        ');
+
+        // GANTI TABEL
         $this->db->from('trx_pemotongan p');
+
         $this->db->join('master_wilayah w', 'p.id_wilayah = w.id_wilayah');
         $this->db->join('master_komoditas k', 'p.id_komoditas = k.id_komoditas');
+
         $this->db->where('p.bulan', $bulan);
         $this->db->where('p.tahun', $tahun);
-        $this->db->group_by(['w.nama_wilayah', 'k.nama_komoditas']);
-        $this->db->order_by('w.nama_wilayah');
-        $this->db->order_by('k.id_komoditas'); 
+
+        $this->db->group_by([
+            'p.id_wilayah',
+            'p.id_komoditas',
+            'w.nama_wilayah',
+            'k.nama_komoditas',
+            'p.jenis_kelamin',
+        ]);
+
+        $this->db->order_by('k.urut', 'ASC');
+
         return $this->db->get()->result_array();
     }
-
 
     public function get_pivot_data_kecamatan($bulan, $tahun) {
         $this->db->select('
