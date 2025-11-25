@@ -462,212 +462,210 @@ class Rekap extends CI_Controller {
     }
 
     public function export_pemotongan()
-{
-    require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
+    {
+        require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
 
-    $bulan = $this->input->get('bulan') ?: date('m');
-    $tahun = $this->input->get('tahun') ?: date('Y');
+        $bulan = $this->input->get('bulan') ?: date('m');
+        $tahun = $this->input->get('tahun') ?: date('Y');
 
-    $data = $this->getDataPemotongan($bulan, $tahun);
-    $PemotonganPivot = $data['pivot'];
-    $PemotonganKomoditas = $data['komoditas'];
+        $data = $this->getDataPemotongan($bulan, $tahun);
+        $PemotonganPivot = $data['pivot'];
+        $PemotonganKomoditas = $data['komoditas'];
 
-    // Komoditas yang memiliki Jantan/Betina
-    $khususJk = ['Kerbau','Kuda','Sapi Potong','Sapi Perah'];
-    $paksaUmur = [];
+        // Komoditas yang memiliki Jantan/Betina
+        $khususJk = ['Kerbau','Kuda','Sapi Potong','Sapi Perah'];
+        $paksaUmur = [];
 
-    $komoditasBertingkat = [];
+        $komoditasBertingkat = [];
 
-    foreach ($PemotonganKomoditas as $kom) {
-        if (in_array($kom, $paksaUmur) || in_array($kom, $khususJk)) {
-            $komoditasBertingkat[] = $kom;
+        foreach ($PemotonganKomoditas as $kom) {
+            if (in_array($kom, $paksaUmur) || in_array($kom, $khususJk)) {
+                $komoditasBertingkat[] = $kom;
+            }
         }
-    }
 
-    $excel = new PHPExcel();
-    $sheet = $excel->getActiveSheet();
-    $bulanNama = nama_bulan((int)$bulan);
-    $sheet->setTitle($bulanNama . ' ' . $tahun);
+        $excel = new PHPExcel();
+        $sheet = $excel->getActiveSheet();
+        $bulanNama = nama_bulan((int)$bulan);
+        $sheet->setTitle($bulanNama . ' ' . $tahun);
 
-    // ================= HEADER =================
-    $rowNum = 1;
-    $col = 0;
-
-    // Kolom Kecamatan
-    $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Kecamatan');
-    $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 1);
-    $sheet->getColumnDimensionByColumn($col)->setWidth(20);
-    $col++;
-
-    // Header komoditas
-    foreach ($PemotonganKomoditas as $kom) {
-
-        if (in_array($kom, $komoditasBertingkat)) {
-            // Jantan + Betina
-            $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col + 1, $rowNum);
-            $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom);
-            $col += 2;
-
-            // Total
-            $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 1);
-            $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom . ' Total');
-            $col++;
-
-        } else {
-            // Komoditas tidak bertingkat
-            $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 1);
-            $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom);
-            $col++;
-        }
-    }
-
-    // Subheader Jantan / Betina
-    $rowNum++;
-    $col = 1;
-
-    foreach ($PemotonganKomoditas as $kom) {
-        if (in_array($kom, $komoditasBertingkat)) {
-            $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Jantan');
-            $col++;
-
-            $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Betina');
-            $col++;
-
-            // skip total column
-            $col++;
-        }
-    }
-
-    // ================= STYLING HEADER =================
-    $lastCol = $sheet->getHighestColumn();
-    $headerRange = "A1:{$lastCol}{$rowNum}";
-
-    $sheet->getStyle($headerRange)->applyFromArray([
-        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-        'fill' => [
-            'type' => PHPExcel_Style_Fill::FILL_SOLID,
-            'color' => ['rgb' => '1F497D']
-        ],
-        'alignment' => [
-            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
-            'vertical' => PHPExcel_Style_Alignment::VERTICAL_CENTER,
-            'wrap' => true
-        ],
-        'borders' => [
-            'allborders' => ['style' => PHPExcel_Style_Border::BORDER_THIN]
-        ]
-    ]);
-
-    // Freeze Header
-    $sheet->freezePane('B'.($rowNum+1));
-
-    // ================= BODY =================
-    $rowNum++;
-    $totalPerKomoditas = [];
-
-    foreach ($PemotonganPivot as $kec => $row) {
-
+        // ================= HEADER =================
+        $rowNum = 1;
         $col = 0;
-        $sheet->setCellValueByColumnAndRow($col, $rowNum, $kec);
+
+        // Kolom Kecamatan
+        $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Kecamatan');
+        $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 1);
+        $sheet->getColumnDimensionByColumn($col)->setWidth(20);
+        $col++;
+
+        // Header komoditas
+        foreach ($PemotonganKomoditas as $kom) {
+
+            if (in_array($kom, $komoditasBertingkat)) {
+                // Jantan + Betina
+                $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col + 1, $rowNum);
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom);
+                $col += 2;
+
+                // Total
+                $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 1);
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom . ' Total');
+                $col++;
+
+            } else {
+                // Komoditas tidak bertingkat
+                $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 1);
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom);
+                $col++;
+            }
+        }
+
+        // Subheader Jantan / Betina
+        $rowNum++;
+        $col = 1;
+
+        foreach ($PemotonganKomoditas as $kom) {
+            if (in_array($kom, $komoditasBertingkat)) {
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Jantan');
+                $col++;
+
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Betina');
+                $col++;
+
+                // skip total column
+                $col++;
+            }
+        }
+
+        // ================= STYLING HEADER =================
+        $lastCol = $sheet->getHighestColumn();
+        $headerRange = "A1:{$lastCol}{$rowNum}";
+
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'color' => ['rgb' => '1F497D']
+            ],
+            'alignment' => [
+                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+                'vertical' => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+                'wrap' => true
+            ],
+            'borders' => [
+                'allborders' => ['style' => PHPExcel_Style_Border::BORDER_THIN]
+            ]
+        ]);
+
+        // Freeze Header
+        $sheet->freezePane('B'.($rowNum+1));
+
+        // ================= BODY =================
+        $rowNum++;
+        $totalPerKomoditas = [];
+
+        foreach ($PemotonganPivot as $kec => $row) {
+
+            $col = 0;
+            $sheet->setCellValueByColumnAndRow($col, $rowNum, $kec);
+            $col++;
+
+            foreach ($PemotonganKomoditas as $kom) {
+
+                $totalKomoditasRow = 0;
+
+                if (in_array($kom, $komoditasBertingkat)) {
+
+                    foreach (['Jantan','Betina'] as $jk) {
+
+                        $val = 0;
+
+                        if (isset($row[$kom][$jk])) {
+
+                            // Data lama: array kosong umur → ambil nilai pertama
+                            if (is_array($row[$kom][$jk])) {
+                                $first = reset($row[$kom][$jk]); 
+                                $val = (int)$first;
+                            } else {
+                                $val = (int)$row[$kom][$jk];
+                            }
+                        }
+
+                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
+                        $totalKomoditasRow += $val;
+
+                        $totalPerKomoditas[$kom][$jk] =
+                            ($totalPerKomoditas[$kom][$jk] ?? 0) + $val;
+
+                        $col++;
+                    }
+
+                    // Kolom total
+                    $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalKomoditasRow);
+                    $col++;
+
+                } else {
+                    // Komoditas biasa
+                    $val = isset($row[$kom]) ? (int)$row[$kom] : 0;
+                    $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
+
+                    $totalPerKomoditas[$kom] = ($totalPerKomoditas[$kom] ?? 0) + $val;
+                    $col++;
+                }
+            }
+
+            // Warna selang-seling
+            if ($rowNum % 2 == 0) {
+                $sheet->getStyle("A{$rowNum}:{$lastCol}{$rowNum}")
+                    ->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
+                    ->getStartColor()->setRGB('F2F2F2');
+            }
+
+            $rowNum++;
+        }
+
+        // ================= TOTAL ROW =================
+        $col = 0;
+        $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Total');
         $col++;
 
         foreach ($PemotonganKomoditas as $kom) {
 
-            $totalKomoditasRow = 0;
+            $totalAll = 0;
 
             if (in_array($kom, $komoditasBertingkat)) {
 
                 foreach (['Jantan','Betina'] as $jk) {
-
-                    $val = 0;
-
-                    if (isset($row[$kom][$jk])) {
-
-                        // Data lama: array kosong umur → ambil nilai pertama
-                        if (is_array($row[$kom][$jk])) {
-                            $first = reset($row[$kom][$jk]); 
-                            $val = (int)$first;
-                        } else {
-                            $val = (int)$row[$kom][$jk];
-                        }
-                    }
-
+                    $val = (int)($totalPerKomoditas[$kom][$jk] ?? 0);
                     $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
-                    $totalKomoditasRow += $val;
-
-                    $totalPerKomoditas[$kom][$jk] =
-                        ($totalPerKomoditas[$kom][$jk] ?? 0) + $val;
-
+                    $totalAll += $val;
                     $col++;
                 }
 
-                // Kolom total
-                $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalKomoditasRow);
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalAll);
                 $col++;
 
             } else {
-                // Komoditas biasa
-                $val = isset($row[$kom]) ? (int)$row[$kom] : 0;
-                $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
-
-                $totalPerKomoditas[$kom] = ($totalPerKomoditas[$kom] ?? 0) + $val;
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, (int)($totalPerKomoditas[$kom] ?? 0));
                 $col++;
             }
         }
 
-        // Warna selang-seling
-        if ($rowNum % 2 == 0) {
-            $sheet->getStyle("A{$rowNum}:{$lastCol}{$rowNum}")
-                ->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
-                ->getStartColor()->setRGB('F2F2F2');
-        }
+        $sheet->getStyle("A{$rowNum}:{$lastCol}{$rowNum}")->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => ['type'=>PHPExcel_Style_Fill::FILL_SOLID, 'color'=>['rgb'=>'D9D9D9']]
+        ]);
 
-        $rowNum++;
+        // ================= DOWNLOAD =================
+        header('Content-Type: application/vnd.ms-excel');
+        header('Content-Disposition: attachment;filename="Pemotongan '.$bulanNama.' '.$tahun.'.xls"');
+        header('Cache-Control: max-age=0');
+
+        $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
+        $objWriter->save('php://output');
+        exit;
     }
-
-    // ================= TOTAL ROW =================
-    $col = 0;
-    $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Total');
-    $col++;
-
-    foreach ($PemotonganKomoditas as $kom) {
-
-        $totalAll = 0;
-
-        if (in_array($kom, $komoditasBertingkat)) {
-
-            foreach (['Jantan','Betina'] as $jk) {
-                $val = (int)($totalPerKomoditas[$kom][$jk] ?? 0);
-                $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
-                $totalAll += $val;
-                $col++;
-            }
-
-            $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalAll);
-            $col++;
-
-        } else {
-            $sheet->setCellValueByColumnAndRow($col, $rowNum, (int)($totalPerKomoditas[$kom] ?? 0));
-            $col++;
-        }
-    }
-
-    $sheet->getStyle("A{$rowNum}:{$lastCol}{$rowNum}")->applyFromArray([
-        'font' => ['bold' => true],
-        'fill' => ['type'=>PHPExcel_Style_Fill::FILL_SOLID, 'color'=>['rgb'=>'D9D9D9']]
-    ]);
-
-    // ================= DOWNLOAD =================
-    header('Content-Type: application/vnd.ms-excel');
-    header('Content-Disposition: attachment;filename="Pemotongan '.$bulanNama.' '.$tahun.'.xls"');
-    header('Cache-Control: max-age=0');
-
-    $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
-    $objWriter->save('php://output');
-    exit;
-}
-
-
 
     public function get_data_pemotongan()
     {
