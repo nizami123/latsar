@@ -41,6 +41,43 @@
         </li>
         <?php endif; ?>
 
+      <?php if ($this->session->userdata('jabatan') == 'Bidang' || $this->session->userdata('jabatan') == 'Admin Dinas'): ?>
+        <li class="nav-header">REKAP BIDANG</li>
+
+        <li class="nav-item">
+            <a href="<?= base_url('bidang/data/kelahiran') ?>" 
+              class="nav-link <?= ($this->uri->segment(3) == 'kelahiran') ? 'active' : '' ?>">
+                <i class="nav-icon fas fa-baby"></i>
+                <p>KELAHIRAN</p>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="<?= base_url('bidang/data/kematian') ?>" 
+              class="nav-link <?= ($this->uri->segment(3) == 'kematian') ? 'active' : '' ?>">
+                <i class="nav-icon fas fa-skull-crossbones"></i>
+                <p>KEMATIAN</p>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="<?= base_url('bidang/data/masuk') ?>" 
+              class="nav-link <?= ($this->uri->segment(3) == 'masuk') ? 'active' : '' ?>">
+                <i class="nav-icon fas fa-arrow-right"></i>
+                <p>MASUK</p>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="<?= base_url('bidang/data/keluar') ?>" 
+              class="nav-link <?= ($this->uri->segment(3) == 'keluar') ? 'active' : '' ?>">
+                <i class="nav-icon fas fa-arrow-left"></i>
+                <p>KELUAR</p>
+            </a>
+        </li>
+    <?php endif; ?>
+
+
         <?php if ($this->session->userdata('jabatan') == 'Admin Dinas'): ?>
         <li class="nav-header">MASTER DATA</li>
 
