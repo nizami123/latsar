@@ -32,6 +32,7 @@ class Pemotongan_model extends CI_Model {
             k.nama_komoditas,
             p.jenis_kelamin,
             SUM(p.jumlah) AS jumlah,
+            w.urut AS urut_wilayah,
             CASE 
                 WHEN (' . $tahun . ' < 2025) 
                     OR (' . $tahun . ' = 2025 AND ' . $bulan . ' < 10)

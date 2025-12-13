@@ -344,7 +344,7 @@ class Kematian extends CI_Controller {
 
                 // Ambil jumlah
                 $jumlah = isset($row[$col]) ? (int) preg_replace('/[^\d]/', '', $row[$col]) : 0;
-                if ($jumlah <= 0) continue;
+                
 
                 // Siapkan data untuk insert
                 $data_insert = [
@@ -361,7 +361,7 @@ class Kematian extends CI_Controller {
                 $this->Kematian_model->insert($data_insert);
             }
         }
-        $this->db->query("CALL sp_rekap_populasi('".$bulan."', '".$tahun."')");
+        $this->db->query("CALL sp_hitung_populasi_bulan('".$bulan."', '".$tahun."')");
         redirect('kematian');
     }
 

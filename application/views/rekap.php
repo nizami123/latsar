@@ -80,6 +80,17 @@
 
             <!-- Filter Bulan Tahun di paling kanan -->
             <div class="form-inline ml-auto">
+              <select id="filterWilayah" class="form-control form-control-sm mr-2">
+                  <option value="" selected>-- Pilih kecamatan --</option>
+                  <?php 
+                  $query = $this->db->query("SELECT m.nama_wilayah,m.kode FROM master_wilayah m WHERE m.kode IS NOT NULL")->result();
+                  foreach ($query as $row): ?>
+                      <option value="<?= $row->kode ?>">
+                          <?= $row->nama_wilayah ?>
+                      </option>
+                  <?php endforeach; ?>
+              </select>
+
               <select id="filterBulan" class="form-control form-control-sm mr-2">
                 <?php for ($i = 1; $i <= 12; $i++): ?>
                   <option value="<?= $i ?>" <?= ($i == $populasiBulan) ? 'selected' : '' ?>>
@@ -116,7 +127,7 @@
           <div class="table-responsive">
             <div class="table-responsive">
             <table id="populasiDashboard" class="table table-bordered table-striped table-sm">
-              <thead style="background-color: black; color: white;">
+              <thead id="populasiHead" style="background-color: black; color: white;">
                 <tr>
                   <th rowspan="3" style="min-width:150px; text-align:center;">Kecamatan</th>
 
@@ -645,9 +656,10 @@ $(document).ready(function(){
   $('#btnFilterExport').on('click', function() {
     var bulan = document.getElementById('filterBulan').value;
     var tahun = document.getElementById('filterTahun').value;
+    var kecamatan = document.getElementById('filterWilayah').value;
 
     // Redirect ke file PHP export, kirim bulan & tahun via GET
-    window.location.href = '<?= base_url("rekap/export") ?>?bulan=' + bulan + '&tahun=' + tahun;
+    window.location.href = '<?= base_url("rekap/export") ?>?bulan=' + bulan + '&tahun=' + tahun + '&kecamatan=' + kecamatan;
   });
 
   $('#btnPemotonganFilterExport').on('click', function() {
@@ -661,15 +673,67 @@ $(document).ready(function(){
   $('#btnFilter').on('click', function() {
     let bulan = $('#filterBulan').val();
     let tahun = $('#filterTahun').val();
+    let kecamatan = $('#filterWilayah').val();
 
     $.ajax({
         url: "<?= base_url('rekap/get_data_populasi') ?>",
         type: "GET",
-        data: { bulan: bulan, tahun: tahun },
+        data: { bulan: bulan, tahun: tahun, kecamatan: kecamatan },
         dataType: "json",
         success: function(res) {
             let tbody = "";
             let totalPerKomoditasPopulasi = {};
+
+            let thead = `<tr> <th rowspan="3" style="min-width:150px; text-align:center;">Kecamatan</th>`;
+
+            // BARIS 1 : NAMA KOMODITAS
+            res.komoditas.forEach(kom => {
+                if (komoditasBertingkatPopulasi.includes(kom)) {
+                    if (komoditasAdaUmurPopulasi[kom]) {
+                        thead += `<th colspan="7" style="text-align:center;">${kom}</th>`;
+                    } else {
+                        thead += `<th colspan="3" style="text-align:center;">${kom}</th>`;
+                    }
+                } else {
+                    thead += `<th rowspan="3" style="text-align:center;">${kom}</th>`;
+                }
+            });
+            thead += `</tr><tr>`;
+
+            // BARIS 2 : JANTAN / BETINA / TOTAL
+            res.komoditas.forEach(kom => {
+                if (komoditasBertingkatPopulasi.includes(kom)) {
+                    if (komoditasAdaUmurPopulasi[kom]) {
+                        thead += `
+                            <th colspan="3" style="text-align:center;">Jantan</th>
+                            <th colspan="3" style="text-align:center;">Betina</th>
+                            <th rowspan="2" style="text-align:center; background-color:black;">Total</th>
+                        `;
+                    } else {
+                        thead += `
+                            <th rowspan="2" style="text-align:center;">Jantan</th>
+                            <th rowspan="2" style="text-align:center;">Betina</th>
+                            <th rowspan="2" style="text-align:center; background-color:black;">Total</th>
+                        `;
+                    }
+                }
+            });
+            thead += `</tr><tr>`;
+
+            // BARIS 3 : ANAK / MUDA / DEWASA
+            res.komoditas.forEach(kom => {
+                if (komoditasBertingkatPopulasi.includes(kom) && komoditasAdaUmurPopulasi[kom]) {
+                    ['Jantan','Betina'].forEach(jk => {
+                        umurListPopulasi.forEach(umur => {
+                            thead += `<th style="text-align:center;">${umur}</th>`;
+                        });
+                    });
+                }
+            });
+            thead += `</tr>`;
+            console.log(thead);
+            // SET <thead> KE TABLE
+            $("#populasiHead").html(thead);
 
             // Inisialisasi total
             res.komoditas.forEach(k => {

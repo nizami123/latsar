@@ -33,7 +33,7 @@ class Rekap extends CI_Controller {
         $this->load->view('rekap', $data);
     }
 
-    private function getDataPopulasi($bulan = null, $tahun = null)
+    private function getDataPopulasi($bulan = null, $tahun = null, $kecamatan = null)
     {
         // Jika bulan/tahun tidak diberikan, ambil dari data trx_populasi terbaru
         if (is_null($bulan) || is_null($tahun)) {
@@ -66,7 +66,8 @@ class Rekap extends CI_Controller {
         $bulan = str_pad($bulan, 2, '0', STR_PAD_LEFT);
 
         // Ambil data pivot dari model
-        $raw_data = $this->Populasi_model->get_pivot_data($bulan, $tahun);
+        $raw_data = $this->Populasi_model->get_pivot_data($bulan, $tahun, $kecamatan);
+        // echo '<pre>'; print_r($raw_data); echo '</pre>';die;
 
         $pivot = [];
         $komoditasList = [];
@@ -80,6 +81,7 @@ class Rekap extends CI_Controller {
             $umur          = $row['umur'] ?? '';
             $jumlah        = abs((int)$row['jumlah']); // pastikan integer
             $hitung        = (int)$row['hitung'];
+            $urut_wilayah  = (int)$row['urut_wilayah'];
 
             // List komoditas dan kecamatan
             if (!in_array($komoditas, $komoditasList)) $komoditasList[] = $komoditas;
@@ -87,6 +89,7 @@ class Rekap extends CI_Controller {
 
             // Status
             $pivot[$kecamatan]['status'] = $hitung ? 1 : 0;
+            $pivot[$kecamatan]['urut_wilayah'] = $urut_wilayah;
 
             // --------- CASE 1: jenis_kelamin & umur NULL → langsung merge ke komoditas
             if ($jenis_kelamin === '' && $umur === '') {
@@ -125,7 +128,11 @@ class Rekap extends CI_Controller {
             $pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur] = $jumlah;
         }
 
-        ksort($pivot);
+        uasort($pivot, function ($a, $b) {
+            return ($a['urut_wilayah'] ?? 0) <=> ($b['urut_wilayah'] ?? 0);
+        });
+
+        // echo '<pre>'; print_r($pivot); echo '</pre>';die;
         return [
             'pivot' => $pivot,
             'komoditas' => $komoditasList,
@@ -138,8 +145,9 @@ class Rekap extends CI_Controller {
     {
         $bulan = $this->input->get('bulan') ?: date('n');
         $tahun = $this->input->get('tahun') ?: date('Y');
+        $kecamatan = $this->input->get('kecamatan') ?: null;
 
-        $data = $this->getDataPopulasi($bulan, $tahun);
+        $data = $this->getDataPopulasi($bulan, $tahun, $kecamatan);
         $this->output
             ->set_content_type('application/json')
             ->set_output(json_encode([
@@ -156,8 +164,9 @@ class Rekap extends CI_Controller {
 
         $bulan = $this->input->get('bulan') ?: date('m');
         $tahun = $this->input->get('tahun') ?: date('Y');
+        $kecamatan = $this->input->get('kecamatan') ?: null;
 
-        $data = $this->getDataPopulasi($bulan, $tahun);
+        $data = $this->getDataPopulasi($bulan, $tahun, $kecamatan);
         $populasiPivot = $data['pivot'];
         $populasiKomoditas = $data['komoditas'];
 
@@ -418,11 +427,13 @@ class Rekap extends CI_Controller {
             $umur          = $row['umur'] ?? '';
             $jumlah        = abs((int)$row['jumlah']);
             $hitung        = (int)$row['hitung'];
+            $urut_wilayah  = (int)$row['urut_wilayah'];
 
             if (!in_array($komoditas, $komoditasList)) $komoditasList[] = $komoditas;
             if (!in_array($kecamatan, $kecamatanList)) $kecamatanList[] = $kecamatan;
 
             $pivot[$kecamatan]['status'] = $hitung ? 1 : 0;
+            $pivot[$kecamatan]['urut_wilayah'] = $urut_wilayah;
 
             if ($jenis_kelamin === '' && $umur === '') {
                 if (isset($pivot[$kecamatan][$komoditas]) && is_array($pivot[$kecamatan][$komoditas])) {
@@ -452,7 +463,9 @@ class Rekap extends CI_Controller {
             $pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur] = $jumlah;
         }
 
-        ksort($pivot);
+        uasort($pivot, function ($a, $b) {
+            return ($a['urut_wilayah'] ?? 0) <=> ($b['urut_wilayah'] ?? 0);
+        });        
         return [
             'pivot' => $pivot,
             'komoditas' => $komoditasList,

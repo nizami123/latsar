@@ -28,7 +28,7 @@ class Bidang extends CI_Controller {
         $this->load->view('bidang', $data);
     }
 
-    private function getDataBidang($tabel, $bulan = null, $tahun = null)
+    private function getDataBidang($tabel, $bulan = null, $tahun = null, $kecamatan = null)
     {
         // Jika bulan/tahun tidak diberikan, ambil dari data trx_populasi terbaru
         if (is_null($bulan) || is_null($tahun)) {
@@ -51,7 +51,6 @@ class Bidang extends CI_Controller {
             $bulan = (int)$latest['bulan'];
             $tahun = (int)$latest['tahun'];
 
-            // Jika bulan > 12, reset ke 1 dan tambah tahun
             if ($bulan > 12) {
                 $bulan = 1;
                 $tahun++;
@@ -61,20 +60,21 @@ class Bidang extends CI_Controller {
         $bulan = str_pad($bulan, 2, '0', STR_PAD_LEFT);
 
         // Ambil data pivot dari model
-        $raw_data = $this->Bidang_model->get_pivot_data($tabel, $bulan, $tahun);
+        $raw_data = $this->Bidang_model->get_pivot_data($tabel, $bulan, $tahun, $kecamatan);
 
         $pivot = [];
         $komoditasList = [];
         $kecamatanList = [];
-        // var_dump($raw_data); exit;
 
         foreach ($raw_data as $row) {
+
             $kecamatan     = $row['kecamatan'];
             $komoditas     = $row['nama_komoditas'];
-            $jenis_kelamin = $row['jenis_kelamin'] ?? '';
-            $umur          = $row['umur'] ?? '';
-            $jumlah        = abs((int)$row['jumlah']); // pastikan integer
-            $hitung        = (int)$row['hitung'];
+            $jenis_kelamin = $row['jenis_kelamin'] ?: '0';
+            $umur          = $row['umur'] ?: '0';
+            $jumlah        = abs((int)($row['jumlah'] ?? 0));
+            $hitung        = (int)($row['hitung'] ?? 0);
+            $urut_wilayah  = (int)($row['urut_wilayah'] ?? 0);
 
             // List komoditas dan kecamatan
             if (!in_array($komoditas, $komoditasList)) $komoditasList[] = $komoditas;
@@ -82,45 +82,52 @@ class Bidang extends CI_Controller {
 
             // Status
             $pivot[$kecamatan]['status'] = $hitung ? 1 : 0;
+            $pivot[$kecamatan]['urut_wilayah'] = $urut_wilayah;
 
-            // --------- CASE 1: jenis_kelamin & umur NULL → langsung merge ke komoditas
-            if ($jenis_kelamin === '' && $umur === '') {
+            // --------- CASE 1: jenis_kelamin & umur kosong → merge ke total komoditas
+            if ($jenis_kelamin === '0' && $umur === '0') {
 
-                // Jika sebelumnya tipe array, sum harus di level paling luar
                 if (isset($pivot[$kecamatan][$komoditas]) && is_array($pivot[$kecamatan][$komoditas])) {
-                    // Jika ingin memaksa sum ke "total", bisa buat key khusus
                     $existingArray = $pivot[$kecamatan][$komoditas];
-                    $pivot[$kecamatan][$komoditas] = (isset($existingArray['total']) ? $existingArray['total'] : 0) + $jumlah;
+                    $pivot[$kecamatan][$komoditas] =
+                        (isset($existingArray['total']) ? $existingArray['total'] : 0) + $jumlah;
                 } else {
-                    // Jika belum ada atau integer
-                    $pivot[$kecamatan][$komoditas] = ($pivot[$kecamatan][$komoditas] ?? 0) + $jumlah;
+                    $pivot[$kecamatan][$komoditas] =
+                        ($pivot[$kecamatan][$komoditas] ?? 0) + $jumlah;
                 }
 
                 continue;
             }
 
-            // --------- CASE 2: Data normal (bertier: komoditas → jenis_kelamin → umur)
+            // --------- CASE 2: Data normal (bertingkat)
 
-            // Jika sebelumnya integer, ubah jadi array
             if (isset($pivot[$kecamatan][$komoditas]) && !is_array($pivot[$kecamatan][$komoditas])) {
                 $pivot[$kecamatan][$komoditas] = [
-                    'total' => $pivot[$kecamatan][$komoditas]   // pindahkan angka ke total
+                    'total' => $pivot[$kecamatan][$komoditas]
                 ];
             }
 
-            // Inisialisasi bertingkat
             if (!isset($pivot[$kecamatan][$komoditas])) {
                 $pivot[$kecamatan][$komoditas] = [];
             }
+
             if (!isset($pivot[$kecamatan][$komoditas][$jenis_kelamin])) {
                 $pivot[$kecamatan][$komoditas][$jenis_kelamin] = [];
+            }
+
+            // Jika belum ada → isi 0 dulu
+            if (!isset($pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur])) {
+                $pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur] = 0;
             }
 
             // Simpan jumlah
             $pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur] = $jumlah;
         }
 
-        ksort($pivot);
+        uasort($pivot, function ($a, $b) {
+            return ($a['urut_wilayah'] ?? 0) <=> ($b['urut_wilayah'] ?? 0);
+        });
+
         return [
             'pivot' => $pivot,
             'komoditas' => $komoditasList,
@@ -134,8 +141,9 @@ class Bidang extends CI_Controller {
         $bulan = $this->input->get('bulan') ?: date('n');
         $tahun = $this->input->get('tahun') ?: date('Y');
         $tabel = $this->input->get('tabel') ?: 'populasi';
+        $kecamatan = $this->input->get('kecamatan') ?: null;
 
-        $data = $this->getDataBidang($tabel, $bulan, $tahun);
+        $data = $this->getDataBidang($tabel, $bulan, $tahun, $kecamatan);
         $this->output
             ->set_content_type('application/json')
             ->set_output(json_encode([
@@ -152,9 +160,10 @@ class Bidang extends CI_Controller {
 
         $bulan = $this->input->get('bulan') ?: date('m');
         $tahun = $this->input->get('tahun') ?: date('Y');
+        $kecamatan = $this->input->get('kecamatan') ?: null;
         $tabel = $this->input->get('tabel') ?: 'populasi';
 
-        $data = $this->getDataBidang($tabel, $bulan, $tahun);
+        $data = $this->getDataBidang($tabel, $bulan, $tahun, $kecamatan);
         $bidangPivot = $data['pivot'];
         $bidangKomoditas = $data['komoditas'];
 

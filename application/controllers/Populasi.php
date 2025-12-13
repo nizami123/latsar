@@ -354,7 +354,6 @@ class Populasi extends CI_Controller {
 
                 // Ambil jumlah
                 $jumlah = isset($row[$col]) ? (int) preg_replace('/[^\d]/', '', $row[$col]) : 0;
-                if ($jumlah <= 0) continue;
 
                 // Siapkan data untuk insert
                 $data_insert = [
@@ -371,6 +370,7 @@ class Populasi extends CI_Controller {
                 $this->Populasi_model->insert($data_insert);
             }
         }
+        // $this->db->query("CALL sp_hitung_populasi_bulan('".$bulan."', '".$tahun."')");
         redirect('populasi');
     }
 
