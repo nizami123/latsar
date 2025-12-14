@@ -67,7 +67,7 @@ class Rekap extends CI_Controller {
 
         // Ambil data pivot dari model
         $raw_data = $this->Populasi_model->get_pivot_data($bulan, $tahun, $kecamatan);
-        // echo '<pre>'; print_r($raw_data); echo '</pre>';die;
+        
 
         $pivot = [];
         $komoditasList = [];
@@ -79,14 +79,13 @@ class Rekap extends CI_Controller {
             $komoditas     = $row['nama_komoditas'];
             $jenis_kelamin = $row['jenis_kelamin'] ?? '';
             $umur          = $row['umur'] ?? '';
-            $jumlah        = abs((int)$row['jumlah']); // pastikan integer
+            $jumlah        = (int)$row['jumlah']; // pastikan integer
             $hitung        = (int)$row['hitung'];
             $urut_wilayah  = (int)$row['urut_wilayah'];
 
             // List komoditas dan kecamatan
             if (!in_array($komoditas, $komoditasList)) $komoditasList[] = $komoditas;
             if (!in_array($kecamatan, $kecamatanList)) $kecamatanList[] = $kecamatan;
-
             // Status
             $pivot[$kecamatan]['status'] = $hitung ? 1 : 0;
             $pivot[$kecamatan]['urut_wilayah'] = $urut_wilayah;
@@ -127,7 +126,6 @@ class Rekap extends CI_Controller {
             // Simpan jumlah
             $pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur] = $jumlah;
         }
-
         uasort($pivot, function ($a, $b) {
             return ($a['urut_wilayah'] ?? 0) <=> ($b['urut_wilayah'] ?? 0);
         });
@@ -289,13 +287,14 @@ class Rekap extends CI_Controller {
         // ===== BODY =====
         $rowNum++;
         $totalPerKomoditas = [];
-
+// echo '<pre>'; print_r($populasiPivot); echo '</pre>';die;
         foreach ($populasiPivot as $kec => $row) {
             $col = 0;
             $sheet->setCellValueByColumnAndRow($col, $rowNum, $kec);
             $col++;
 
             foreach ($populasiKomoditas as $kom) {
+                
                 $totalKomoditasRow = 0;
                 if (in_array($kom, $komoditasBertingkat)) {
                     if (!empty($komoditasAdaUmur[$kom])) {
