@@ -59,8 +59,6 @@ $('.btnEditKelahiran').on('click', function () {
         success: function(response) {
           if (response && response.length > 0) {
             $.each(response, function(index, item) {
-              console.log(desa);
-              console.log(item);
               let selected = (item.kode_desa == desa) ? 'selected' : '';
               $('#edit_desa').append(
                 `<option value="${item.kode_desa}" ${selected}>${item.nama_desa}</option>`

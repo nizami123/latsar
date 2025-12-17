@@ -78,13 +78,19 @@ class Komoditas_model extends CI_Model {
     }
 
     public function getKomoditasIndexed() {
-        $res = $this->db->get('master_komoditas')->result();
+        $res = $this->db
+            ->not_like('jenis', 'komoditas')
+            ->get('master_komoditas')
+            ->result();
+
         $arr = [];
-        foreach($res as $r){
+        foreach ($res as $r) {
             $arr[$r->nama_komoditas] = $r->id_komoditas;
         }
+
         return $arr;
     }
+
 
     public function getKecamatan() {
         $this->db->where('urut <', 100);

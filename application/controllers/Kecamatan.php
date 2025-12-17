@@ -3,18 +3,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Kecamatan extends CI_Controller {
 
-    public function __construct()
+     public function __construct()
     {
         parent::__construct();
         $this->load->model('Harga_model');
-        $this->load->model('Populasi_model');
+        $this->load->model('Kecamatan_model');
         $this->load->model('Komoditas_model');
-        $this->load->model('Masuk_model');
-        $this->load->model('Keluar_model');
-        $this->load->model('Kelahiran_model');
-        $this->load->model('Kematian_model');
-        $this->load->model('Pemotongan_model'); // ✅ Tambah model Pemotongan
-
         if(!$this->session->userdata('logged_in')){
             redirect('auth');
         }
@@ -22,261 +16,379 @@ class Kecamatan extends CI_Controller {
 
     public function index()
     {
-        $populasi  = $this->getDataPopulasi();
-        $masuk     = $this->getDataMasuk();
-        $keluar    = $this->getDataKeluar();
-        $kelahiran = $this->getDataKelahiran();
-        $kematian  = $this->getDataKematian();
-        $pemotongan = $this->getDataPemotongan(); // ✅ Tambah pemotongan
+        $daftarTabel = [
+            'kelahiran',
+            'kematian',
+            'masuk',
+            'keluar',
+            'pemotongan',
+        ];
 
-        $data['kecamatan'] = $this->db
-            ->get_where('master_wilayah', ['kode' => $this->session->userdata('kode')])
-            ->row_array();
+        $result = [];
 
-        // POPULASI
-        $data['populasiPivot']     = $populasi['pivot'];
-        $data['populasiKomoditas'] = $populasi['komoditas'];
-        $data['populasiBulan']     = $populasi['bulan'];
-        $data['populasiTahun']     = $populasi['tahun'];
+        foreach ($daftarTabel as $tabel) {
+            $kecamatan = $this->getDataKecamatan($tabel);
+            $result[$tabel] = [
+                'pivot'      => $kecamatan['pivot'],
+                'komoditas'  => $kecamatan['komoditas'],
+                'bulan'      => $kecamatan['bulan'],
+                'tahun'      => $kecamatan['tahun'],
+            ];
+        }
 
-        // MASUK
-        $data['masukPivot']     = $masuk['pivot'];
-        $data['masukKomoditas'] = $masuk['komoditas'];
-        $data['masukBulan']     = $masuk['bulan'];
-        $data['masukTahun']     = $masuk['tahun'];
-
-        // KELUAR
-        $data['keluarPivot']     = $keluar['pivot'];
-        $data['keluarKomoditas'] = $keluar['komoditas'];
-        $data['keluarBulan']     = $keluar['bulan'];
-        $data['keluarTahun']     = $keluar['tahun'];
-
-        // KELAHIRAN
-        $data['kelahiranPivot']     = $kelahiran['pivot'];
-        $data['kelahiranKomoditas'] = $kelahiran['komoditas'];
-        $data['kelahiranBulan']     = $kelahiran['bulan'];
-        $data['kelahiranTahun']     = $kelahiran['tahun'];
-
-        // KEMATIAN
-        $data['kematianPivot']     = $kematian['pivot'];
-        $data['kematianKomoditas'] = $kematian['komoditas'];
-        $data['kematianBulan']     = $kematian['bulan'];
-        $data['kematianTahun']     = $kematian['tahun'];
-
-        // ✅ PEMOTONGAN
-        $data['pemotonganPivot']     = $pemotongan['pivot'];
-        $data['pemotonganKomoditas'] = $pemotongan['komoditas'];
-        $data['pemotonganBulan']     = $pemotongan['bulan'];
-        $data['pemotonganTahun']     = $pemotongan['tahun'];
+        $data['dataKecamatan'] = $result;
 
         $this->load->view('templates/header');
         $this->load->view('templates/navbar');
         $this->load->view('kecamatan', $data);
     }
 
-    /* ===================== POPULASI ===================== */
-    private function getDataPopulasi() {
-        $this->db->select('tahun, bulan');
-        $this->db->from('trx_populasi');
-        $this->db->order_by('tahun','DESC')->order_by('bulan','DESC');
-        $this->db->limit(1);
-        $latest = $this->db->get()->row_array();
-        if(!$latest) return ['pivot'=>[],'komoditas'=>[],'bulan'=>null,'tahun'=>null];
-        return $this->getDataPopulasiByMonthYear($latest['bulan'], $latest['tahun']);
-    }
+    private function getDataKecamatan($tabel, $bulan = null, $tahun = null)
+    {
+        // Jika bulan/tahun tidak diberikan, ambil dari data trx_populasi terbaru
+        if (is_null($bulan) || is_null($tahun)) {
+            $this->db->select('tahun, bulan');
+            $this->db->from('trx_'.$tabel);
+            $this->db->order_by('tahun', 'DESC');
+            $this->db->order_by('bulan', 'DESC');
+            $this->db->limit(1);
+            $latest = $this->db->get()->row_array();
 
-    private function getDataPopulasiByMonthYear($bulan,$tahun) {
-        $raw_data = $this->Populasi_model->get_pivot_data_kecamatan($bulan,$tahun);
-        return $this->preparePivot($raw_data, $bulan, $tahun);
-    }
+            if (!$latest) {
+                return [
+                    'pivot' => [],
+                    'komoditas' => [],
+                    'bulan' => null,
+                    'tahun' => null
+                ];
+            }
 
-    public function get_data_populasi(){
-        $bulan = $this->input->get('bulan') ?: date('n');
-        $tahun = $this->input->get('tahun') ?: date('Y');
-        $data = $this->getDataPopulasiByMonthYear($bulan,$tahun);
-        $this->output->set_content_type('application/json')->set_output(json_encode([
-            'bulan'=>$data['bulan'],
-            'tahun'=>$data['tahun'],
-            'nama_bulan'=>nama_bulan($data['bulan']),
-            'komoditas'=>$data['komoditas'],
-            'data'=>$data['pivot']
-        ]));
-    }
+            $bulan = (int)$latest['bulan'];
+            $tahun = (int)$latest['tahun'];
 
-    /* ===================== MASUK ===================== */
-    private function getDataMasuk() {
-        $this->db->select('tahun, bulan');
-        $this->db->from('trx_masuk');
-        $this->db->order_by('tahun','DESC')->order_by('bulan','DESC');
-        $this->db->limit(1);
-        $latest = $this->db->get()->row_array();
-        if(!$latest) return ['pivot'=>[],'komoditas'=>[],'bulan'=>null,'tahun'=>null];
-        return $this->getDataMasukByMonthYear($latest['bulan'], $latest['tahun']);
-    }
+            if ($bulan > 12) {
+                $bulan = 1;
+                $tahun++;
+            }
+        }
 
-    private function getDataMasukByMonthYear($bulan,$tahun) {
-        $raw_data = $this->Masuk_model->get_pivot_data_kecamatan($bulan,$tahun);
-        return $this->preparePivot($raw_data, $bulan, $tahun);
-    }
+        $bulan = str_pad($bulan, 2, '0', STR_PAD_LEFT);
 
-    public function get_data_masuk(){
-        $bulan = $this->input->get('bulan') ?: date('n');
-        $tahun = $this->input->get('tahun') ?: date('Y');
-        $data = $this->getDataMasukByMonthYear($bulan,$tahun);
-        $this->output->set_content_type('application/json')->set_output(json_encode([
-            'bulan'=>$data['bulan'],
-            'tahun'=>$data['tahun'],
-            'nama_bulan'=>nama_bulan($data['bulan']),
-            'komoditas'=>$data['komoditas'],
-            'data'=>$data['pivot']
-        ]));
-    }
+        // Ambil data pivot dari model
+        $raw_data = $this->Kecamatan_model->get_pivot_data($tabel, $bulan, $tahun);
 
-    /* ===================== KELUAR ===================== */
-    private function getDataKeluar() {
-        $this->db->select('tahun, bulan');
-        $this->db->from('trx_keluar');
-        $this->db->order_by('tahun','DESC')->order_by('bulan','DESC');
-        $this->db->limit(1);
-        $latest = $this->db->get()->row_array();
-        if(!$latest) return ['pivot'=>[],'komoditas'=>[],'bulan'=>null,'tahun'=>null];
-        return $this->getDataKeluarByMonthYear($latest['bulan'], $latest['tahun']);
-    }
-
-    private function getDataKeluarByMonthYear($bulan,$tahun) {
-        $raw_data = $this->Keluar_model->get_pivot_data_kecamatan($bulan,$tahun);
-        return $this->preparePivot($raw_data, $bulan, $tahun);
-    }
-
-    public function get_data_keluar(){
-        $bulan = $this->input->get('bulan') ?: date('n');
-        $tahun = $this->input->get('tahun') ?: date('Y');
-        $data = $this->getDataKeluarByMonthYear($bulan,$tahun);
-        $this->output->set_content_type('application/json')->set_output(json_encode([
-            'bulan'=>$data['bulan'],
-            'tahun'=>$data['tahun'],
-            'nama_bulan'=>nama_bulan($data['bulan']),
-            'komoditas'=>$data['komoditas'],
-            'data'=>$data['pivot']
-        ]));
-    }
-
-    /* ===================== KELAHIRAN ===================== */
-    private function getDataKelahiran() {
-        $this->db->select('tahun, bulan');
-        $this->db->from('trx_kelahiran');
-        $this->db->order_by('tahun','DESC')->order_by('bulan','DESC');
-        $this->db->limit(1);
-        $latest = $this->db->get()->row_array();
-        if(!$latest) return ['pivot'=>[],'komoditas'=>[],'bulan'=>null,'tahun'=>null];
-        return $this->getDataKelahiranByMonthYear($latest['bulan'], $latest['tahun']);
-    }
-
-    private function getDataKelahiranByMonthYear($bulan,$tahun) {
-        $raw_data = $this->Kelahiran_model->get_pivot_data_kecamatan($bulan,$tahun);
-        return $this->preparePivot($raw_data, $bulan, $tahun);
-    }
-
-    public function get_data_kelahiran(){
-        $bulan = $this->input->get('bulan') ?: date('n');
-        $tahun = $this->input->get('tahun') ?: date('Y');
-        $data = $this->getDataKelahiranByMonthYear($bulan,$tahun);
-        $this->output->set_content_type('application/json')->set_output(json_encode([
-            'bulan'=>$data['bulan'],
-            'tahun'=>$data['tahun'],
-            'nama_bulan'=>nama_bulan($data['bulan']),
-            'komoditas'=>$data['komoditas'],
-            'data'=>$data['pivot']
-        ]));
-    }
-
-    /* ===================== KEMATIAN ===================== */
-    private function getDataKematian() {
-        $this->db->select('tahun, bulan');
-        $this->db->from('trx_kematian');
-        $this->db->order_by('tahun','DESC')->order_by('bulan','DESC');
-        $this->db->limit(1);
-        $latest = $this->db->get()->row_array();
-        if(!$latest) return ['pivot'=>[],'komoditas'=>[],'bulan'=>null,'tahun'=>null];
-        return $this->getDataKematianByMonthYear($latest['bulan'], $latest['tahun']);
-    }
-
-    private function getDataKematianByMonthYear($bulan,$tahun) {
-        $raw_data = $this->Kematian_model->get_pivot_data_kecamatan($bulan,$tahun);
-        return $this->preparePivot($raw_data, $bulan, $tahun);
-    }
-
-    public function get_data_kematian(){
-        $bulan = $this->input->get('bulan') ?: date('n');
-        $tahun = $this->input->get('tahun') ?: date('Y');
-        $data = $this->getDataKematianByMonthYear($bulan,$tahun);
-        $this->output->set_content_type('application/json')->set_output(json_encode([
-            'bulan'=>$data['bulan'],
-            'tahun'=>$data['tahun'],
-            'nama_bulan'=>nama_bulan($data['bulan']),
-            'komoditas'=>$data['komoditas'],
-            'data'=>$data['pivot']
-        ]));
-    }
-
-    /* ===================== ✅ PEMOTONGAN ===================== */
-    private function getDataPemotongan() {
-        $this->db->select('tahun, bulan');
-        $this->db->from('trx_pemotongan');
-        $this->db->order_by('tahun','DESC')->order_by('bulan','DESC');
-        $this->db->limit(1);
-        $latest = $this->db->get()->row_array();
-        if(!$latest) return ['pivot'=>[],'komoditas'=>[],'bulan'=>null,'tahun'=>null];
-        return $this->getDataPemotonganByMonthYear($latest['bulan'], $latest['tahun']);
-    }
-
-    private function getDataPemotonganByMonthYear($bulan,$tahun) {
-        $raw_data = $this->Pemotongan_model->get_pivot_data_kecamatan($bulan,$tahun);
-        return $this->preparePivot($raw_data, $bulan, $tahun);
-    }
-
-    public function get_data_pemotongan(){
-        $bulan = $this->input->get('bulan') ?: date('n');
-        $tahun = $this->input->get('tahun') ?: date('Y');
-        $data = $this->getDataPemotonganByMonthYear($bulan,$tahun);
-        $this->output->set_content_type('application/json')->set_output(json_encode([
-            'bulan'=>$data['bulan'],
-            'tahun'=>$data['tahun'],
-            'nama_bulan'=>nama_bulan($data['bulan']),
-            'komoditas'=>$data['komoditas'],
-            'data'=>$data['pivot']
-        ]));
-    }
-
-    /* ===================== UTILITY ===================== */
-    private function preparePivot($raw_data, $bulan, $tahun) {
         $pivot = [];
         $komoditasList = [];
         $kecamatanList = [];
 
-        foreach($raw_data as $row){
-            $kec = $row['kecamatan'];
-            $kom = $row['nama_komoditas'];
-            if(!in_array($kom,$komoditasList)) $komoditasList[] = $kom;
-            if(!in_array($kec,$kecamatanList)) $kecamatanList[] = $kec;
+        foreach ($raw_data as $row) {
+
+            $kecamatan     = $row['kecamatan'];
+            $komoditas     = $row['nama_komoditas'];
+            $jenis_kelamin = $row['jenis_kelamin'] ?: '0';
+            $umur          = $row['umur'] ?: '0';
+            $jumlah        = abs((int)($row['jumlah'] ?? 0));
+            $hitung        = (int)($row['hitung'] ?? 0);
+            $urut_wilayah  = (int)($row['urut_wilayah'] ?? 0);
+
+            // List komoditas dan kecamatan
+            if (!in_array($komoditas, $komoditasList)) $komoditasList[] = $komoditas;
+            if (!in_array($kecamatan, $kecamatanList)) $kecamatanList[] = $kecamatan;
+
+            // Status
+            $pivot[$kecamatan]['status'] = $hitung ? 1 : 0;
+            $pivot[$kecamatan]['urut_wilayah'] = $urut_wilayah;
+
+            // --------- CASE 1: jenis_kelamin & umur kosong → merge ke total komoditas
+            if ($jenis_kelamin === '0' && $umur === '0') {
+
+                if (isset($pivot[$kecamatan][$komoditas]) && is_array($pivot[$kecamatan][$komoditas])) {
+                    $existingArray = $pivot[$kecamatan][$komoditas];
+                    $pivot[$kecamatan][$komoditas] =
+                        (isset($existingArray['total']) ? $existingArray['total'] : 0) + $jumlah;
+                } else {
+                    $pivot[$kecamatan][$komoditas] =
+                        ($pivot[$kecamatan][$komoditas] ?? 0) + $jumlah;
+                }
+
+                continue;
+            }
+
+            // --------- CASE 2: Data normal (bertingkat)
+
+            if (isset($pivot[$kecamatan][$komoditas]) && !is_array($pivot[$kecamatan][$komoditas])) {
+                $pivot[$kecamatan][$komoditas] = [
+                    'total' => $pivot[$kecamatan][$komoditas]
+                ];
+            }
+
+            if (!isset($pivot[$kecamatan][$komoditas])) {
+                $pivot[$kecamatan][$komoditas] = [];
+            }
+
+            if (!isset($pivot[$kecamatan][$komoditas][$jenis_kelamin])) {
+                $pivot[$kecamatan][$komoditas][$jenis_kelamin] = [];
+            }
+
+            // Jika belum ada → isi 0 dulu
+            if (!isset($pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur])) {
+                $pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur] = 0;
+            }
+
+            // Simpan jumlah
+            $pivot[$kecamatan][$komoditas][$jenis_kelamin][$umur] = $jumlah;
         }
 
-        // inisialisasi 0
-        foreach($kecamatanList as $kec){
-            foreach($komoditasList as $kom){
-                $pivot[$kec][$kom] = 0;
+        uasort($pivot, function ($a, $b) {
+            return ($a['urut_wilayah'] ?? 0) <=> ($b['urut_wilayah'] ?? 0);
+        });
+
+        return [
+            'pivot' => $pivot,
+            'komoditas' => $komoditasList,
+            'bulan' => $bulan,
+            'tahun' => $tahun
+        ];
+    }
+
+    public function get_data_kecamatan()
+    {
+        $bulan = $this->input->get('bulan') ?: date('n');
+        $tahun = $this->input->get('tahun') ?: date('Y');
+        $tabel = $this->input->get('tabel') ?: 'populasi';
+
+        $data = $this->getDataKecamatan($tabel, $bulan, $tahun);
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'bulan'      => $data['bulan'],
+                'tahun'      => $data['tahun'],
+                'nama_bulan' => nama_bulan($data['bulan']),
+                'komoditas'  => $data['komoditas'],
+                'kecamatan'      => $data['pivot']
+            ]));
+    }
+
+    public function export() {
+        require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
+
+        $bulan = $this->input->get('bulan') ?: date('m');
+        $tahun = $this->input->get('tahun') ?: date('Y');
+        $tabel = $this->input->get('tabel') ?: 'populasi';
+
+        $data = $this->getDataKecamatan($tabel, $bulan, $tahun);
+        $kecamatanPivot = $data['pivot'];
+        $kecamatanKomoditas = $data['komoditas'];
+
+        $umurList = ['Anak', 'Muda', 'Dewasa'];
+        $khususJk = ['Kerbau', 'Kuda'];
+        $paksaUmur = ['Sapi Potong', 'Sapi Perah'];
+        $komoditasBertingkat = [];
+        $komoditasAdaUmur = [];
+
+        foreach ($kecamatanKomoditas as $kom) {
+            if (in_array($kom, $paksaUmur)) {
+                $komoditasBertingkat[] = $kom;
+                $komoditasAdaUmur[$kom] = true;
+            } elseif (in_array($kom, $khususJk)) {
+                $komoditasBertingkat[] = $kom;
+                $komoditasAdaUmur[$kom] = false;
             }
         }
 
-        foreach($raw_data as $row){
-            $pivot[$row['kecamatan']][$row['nama_komoditas']] = $row['jumlah'];
+        $excel = new PHPExcel();
+        $sheet = $excel->getActiveSheet();
+        $bulanNama = nama_bulan((int)$bulan);
+        $sheet->setTitle($bulanNama . ' ' . $tahun);
+
+        // ===== HEADER =====
+        $rowNum = 1;
+        $col = 0;
+        $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Kecamatan');
+        $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 2);
+        $sheet->getStyleByColumnAndRow($col, $rowNum)
+            ->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER)
+            ->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+        $sheet->getColumnDimensionByColumn($col)->setWidth(20);
+        $col++;
+
+        // Baris 1 Header Komoditas
+        foreach ($kecamatanKomoditas as $kom) {
+            if (in_array($kom, $komoditasBertingkat)) {
+                if (!empty($komoditasAdaUmur[$kom])) {
+                    $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col + 5, $rowNum);
+                    $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom);
+                    $col += 6;
+                } else {
+                    $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col + 1, $rowNum);
+                    $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom);
+                    $col += 2;
+                }
+                // Tambahkan kolom total (1 kolom tambahan)
+                $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 2);
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom . ' Total');
+                $col++;
+            } else {
+                $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 2);
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, $kom);
+                $col++;
+            }
         }
 
-        return [
-            'pivot'=>$pivot,
-            'komoditas'=>$komoditasList,
-            'bulan'=>isset($bulan)?$bulan:null,
-            'tahun'=>isset($tahun)?$tahun:null
-        ];
+        // Sub-header: Jantan/Betina & umur
+        $rowNum++;
+        $col = 1;
+        foreach ($kecamatanKomoditas as $kom) {
+            if (in_array($kom, $komoditasBertingkat)) {
+                if (!empty($komoditasAdaUmur[$kom])) {
+                    foreach (['Jantan','Betina'] as $jk) {
+                        $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col + 2, $rowNum);
+                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $jk);
+                        $col += 3;
+                    }
+                    // Skip kolom total (tidak ada subheader)
+                    $col++;
+                } else {
+                    foreach (['Jantan','Betina'] as $jk) {
+                        $sheet->mergeCellsByColumnAndRow($col, $rowNum, $col, $rowNum + 1);
+                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $jk);
+                        $col++;
+                    }
+                    // Skip kolom total
+                    $col++;
+                }
+            }
+        }
+
+        // Sub-sub-header: umur
+        $rowNum++;
+        $col = 1;
+        foreach ($kecamatanKomoditas as $kom) {
+            if (in_array($kom, $komoditasBertingkat) && !empty($komoditasAdaUmur[$kom])) {
+                foreach (['Jantan','Betina'] as $jk) {
+                    foreach ($umurList as $umur) {
+                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $umur);
+                        $col++;
+                    }
+                }
+                // Skip kolom total
+                $col++;
+            }
+        }
+
+        // ===== STYLING HEADER =====
+        $lastCol = $sheet->getHighestColumn();
+        $headerRange = "A1:{$lastCol}{$rowNum}";
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'color' => ['rgb' => '1F497D']
+            ],
+            'alignment' => [
+                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+                'vertical' => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+                'wrap' => true
+            ],
+            'borders' => [
+                'allborders' => ['style' => PHPExcel_Style_Border::BORDER_THIN]
+            ]
+        ]);
+        $sheet->freezePane('B' . ($rowNum + 1));
+
+        // ===== BODY =====
+        $rowNum++;
+        $totalPerKomoditas = [];
+
+        foreach ($kecamatanPivot as $kec => $row) {
+            $col = 0;
+            $sheet->setCellValueByColumnAndRow($col, $rowNum, $kec);
+            $col++;
+
+            foreach ($kecamatanKomoditas as $kom) {
+                $totalKomoditasRow = 0;
+                if (in_array($kom, $komoditasBertingkat)) {
+                    if (!empty($komoditasAdaUmur[$kom])) {
+                        foreach (['Jantan','Betina'] as $jk) {
+                            foreach ($umurList as $umur) {
+                                $val = isset($row[$kom][$jk][$umur]) ? (int)$row[$kom][$jk][$umur] : 0;
+                                $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
+                                $totalKomoditasRow += $val;
+                                $totalPerKomoditas[$kom][$jk][$umur] = ($totalPerKomoditas[$kom][$jk][$umur] ?? 0) + $val;
+                                $col++;
+                            }
+                        }
+                    } else {
+                        foreach (['Jantan','Betina'] as $jk) {
+                            $val = isset($row[$kom][$jk]) ? (int)$row[$kom][$jk] : 0;
+                            $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
+                            $totalKomoditasRow += $val;
+                            $totalPerKomoditas[$kom][$jk] = ($totalPerKomoditas[$kom][$jk] ?? 0) + $val;
+                            $col++;
+                        }
+                    }
+                    // Kolom total untuk komoditas ini
+                    $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalKomoditasRow);
+                    $col++;
+                } else {
+                    $val = isset($row[$kom]) ? (int)$row[$kom] : 0;
+                    $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
+                    $totalPerKomoditas[$kom] = ($totalPerKomoditas[$kom] ?? 0) + $val;
+                    $col++;
+                }
+            }
+
+            if ($rowNum % 2 == 0) {
+                $sheet->getStyle("A{$rowNum}:{$lastCol}{$rowNum}")->getFill()
+                    ->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
+                    ->getStartColor()->setRGB('F2F2F2');
+            }
+            $rowNum++;
+        }
+
+        // ===== TOTAL PER KOMODITAS =====
+        $col = 0;
+        $sheet->setCellValueByColumnAndRow($col, $rowNum, 'Total');
+        $col++;
+        foreach ($kecamatanKomoditas as $kom) {
+            $totalKomoditasAll = 0;
+            if (in_array($kom, $komoditasBertingkat)) {
+                if (!empty($komoditasAdaUmur[$kom])) {
+                    foreach (['Jantan','Betina'] as $jk) {
+                        foreach ($umurList as $umur) {
+                            $val = $totalPerKomoditas[$kom][$jk][$umur] ?? 0;
+                            $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
+                            $totalKomoditasAll += $val;
+                            $col++;
+                        }
+                    }
+                } else {
+                    foreach (['Jantan','Betina'] as $jk) {
+                        $val = $totalPerKomoditas[$kom][$jk] ?? 0;
+                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
+                        $totalKomoditasAll += $val;
+                        $col++;
+                    }
+                }
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalKomoditasAll);
+                $col++;
+            } else {
+                $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalPerKomoditas[$kom] ?? 0);
+                $col++;
+            }
+        }
+        $sheet->getStyle("A{$rowNum}:{$lastCol}{$rowNum}")->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => ['type'=>PHPExcel_Style_Fill::FILL_SOLID, 'color'=>['rgb'=>'D9D9D9']]
+        ]);
+
+        // ===== DOWNLOAD =====
+        header('Content-Type: application/vnd.ms-excel');
+        header('Content-Disposition: attachment;filename="'.$tabel.' '.$bulanNama.' '.$tahun.'.xls"');
+        header('Cache-Control: max-age=0');
+
+        $objWriter = PHPExcel_IOFactory::createWriter($excel, 'Excel5');
+        $objWriter->save('php://output');
+        exit;
     }
 }

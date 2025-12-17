@@ -45,6 +45,28 @@
         <li class="nav-header">REKAP BIDANG</li>
 
         <li class="nav-item">
+            <a href="<?= base_url('harga_komoditas/rekap_harga') ?>" 
+              class="nav-link <?= 
+                ($this->uri->segment(1) == 'harga_komoditas' && $this->uri->segment(2) == 'rekap_harga')
+                 ? 'active' : '' ?>">
+                <i class="nav-icon fas fa-coins"></i>
+                <p>HARGA KOMODITAS</p>
+            </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="<?= base_url('pasar_hewan/rekap') ?>" 
+            class="nav-link <?= 
+                ($this->uri->segment(1) == 'pasar_hewan' && $this->uri->segment(2) == 'rekap')
+                ? 'active' 
+                : '' 
+            ?>">
+            <i class="nav-icon fas fa-balance-scale"></i>
+            <p>PASAR HEWAN</p>
+          </a>
+        </li>
+
+        <li class="nav-item">
             <a href="<?= base_url('bidang/data/kelahiran') ?>" 
               class="nav-link <?= ($this->uri->segment(3) == 'kelahiran') ? 'active' : '' ?>">
                 <i class="nav-icon fas fa-baby"></i>
@@ -103,8 +125,9 @@
             <p>LAYANAN</p>
           </a>
         </li> -->
-
-        <li class="nav-header">PELAPORAN</li>
+        <?php if ($this->session->userdata('jabatan') == 'Admin Dinas' || $this->session->userdata('jabatan') == 'Admin Kecamatan'): ?>
+          <li class="nav-header">PELAPORAN</li>
+        <?php endif; ?>
 
         <?php if ($this->session->userdata('jabatan') == 'Admin Dinas'): ?>
         <li class="nav-item">
@@ -123,6 +146,16 @@
           </a>
         </li>
         <?php endif; ?>
+
+        <?php if ($this->session->userdata('jabatan') == 'Admin Dinas' || $this->session->userdata('jabatan') == 'Admin Kecamatan'): ?>
+        <li class="nav-item">
+          <a href="<?= base_url('harga_komoditas') ?>" 
+            class="nav-link <?= ($this->uri->segment(1) == 'harga_komoditas' && $this->uri->segment(2) != 'rekap_harga')
+            ? 'active' : '' ?>">
+            <i class="nav-icon fas fa-coins"></i>
+            <p>HARGA KOMODITAS</p>
+          </a>
+        </li>
 
         <li class="nav-item">
           <a href="<?= base_url('masuk') ?>" 
@@ -163,6 +196,16 @@
             <p>PEMOTONGAN</p>
           </a>
         </li>
+
+        <li class="nav-item">
+          <a href="<?= base_url('pasar_hewan') ?>" 
+            class="nav-link <?= ($this->uri->segment(1) == 'pasar_hewan' && $this->uri->segment(2) != 'rekap')
+            ? 'active' : '' ?>">
+            <i class="nav-icon fas fa-balance-scale"></i>
+            <p>PASAR HEWAN</p>
+          </a>
+        </li>
+        <?php endif; ?>
 
         <?php if ($this->session->userdata('jabatan') == 'Admin Dinas'): ?>
         <li class="nav-item">

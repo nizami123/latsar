@@ -253,7 +253,136 @@ class Harga extends CI_Controller {
             imagejpeg($image, $fullpath, 100);
             imagedestroy($image);
 
-            echo '<p>✅ Gambar untuk tanggal ' . $tanggal . ' berhasil dibuat! <a href="' . base_url('uploads/' . $filename) . '" target="_blank">Lihat</a></p>';
+            echo '<p>✅ Gambar untuk tanggal ' . $tanggal . ' berhasil dibuat! <a href="' . base_url('uploads/' . $filename) . '" target="_blank">Lihat</a>   <a href="' . base_url('harga/upload_web/' . $tanggal) . '" target="_blank">Upload</a></p>';
         }
     }
+
+    function upload_web($tanggal) {
+        
+        $email = 'dpkh@lamongankab.go.id';
+        $password = 'LMGKAB#dpkh#085808';
+        $cookieFile = tempnam(sys_get_temp_dir(), 'cookie');
+
+        // GET halaman login untuk ambil token CSRF
+        $loginUrl = 'https://lamongankab.go.id/beranda/login';
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $loginUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
+        curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $htmlLogin = curl_exec($ch);
+        curl_close($ch);
+
+        if (!preg_match('/<input type="hidden" name="_token" value="([^"]+)"/', $htmlLogin, $matches)) {
+            echo "Gagal ambil token login.\n"; return;
+        }
+        $loginToken = $matches[1];
+
+        // POST login
+        $postLogin = [
+            '_token' => $loginToken,
+            'email' => $email,
+            'password' => $password
+        ];
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $loginUrl);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postLogin);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
+        curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $loginResponse = curl_exec($ch);
+        curl_close($ch);
+
+        if (strpos($loginResponse, 'Masuk') !== false) {
+            echo "Login gagal.\n"; return;
+        }
+
+        // --------------------
+        // 2️⃣ Ambil token CSRF untuk artikel
+        // --------------------
+        $formUrl = 'https://lamongankab.go.id/beranda/manajemen/artikel/add';
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $formUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
+        curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $htmlForm = curl_exec($ch);
+        curl_close($ch);
+
+        if (!preg_match('/<input type="hidden" name="_token" value="([^"]+)"/', $htmlForm, $matches)) {
+            echo "Gagal ambil token artikel.\n"; return;
+        }
+        $tokenArtikel = $matches[1];
+
+        // --------------------
+        // 3️⃣ Persiapkan file thumbnail + konten
+        // --------------------
+        $thumbnailPath = FCPATH . 'uploads/Thumbnail.jpg';
+        $kontenImagePath = FCPATH . 'uploads/harga-' . date('Y-m-d', strtotime($tanggal)) . '.jpg';
+
+        if (!file_exists($thumbnailPath) || !file_exists($kontenImagePath)) {
+            echo "File thumbnail atau konten tidak ditemukan!\n"; return;
+        }
+
+        // Konten HTML
+        $kontenHtml = '<p><img style="width:840px;" src="data:image/jpeg;base64,' 
+            . base64_encode(file_get_contents($kontenImagePath)) 
+            . '" class="img-fluid mx-auto d-block"></p>';
+
+        // --------------------
+        // 4️⃣ POST artikel (binary files)
+        // --------------------
+        $postData = [
+            '_token' => $tokenArtikel,
+            'judul' => 'Update Harga Komoditas Peternakan Kab Lamongan ' . date('d F Y', strtotime($tanggal)),
+            'konten' => $kontenHtml,
+            'thumbnail' => new CURLFile($thumbnailPath, 'image/jpeg', 'Thumbnail.jpg'),
+            'files[]'   => new CURLFile($kontenImagePath, 'image/jpeg', 'harga-' . date('Y-m-d', strtotime($tanggal)) . '.jpg'),
+            'tanggal' => $tanggal,
+            'kategori' => 'informasi',
+            'link_video' => '',
+            'status_opd' => 'Ditampilkan',
+            'topik[]' => '',
+            'submit' => 'Simpan'
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $formUrl);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HEADER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // ikuti redirect Laravel
+        curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
+        curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'X-Requested-With: XMLHttpRequest'
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            echo "Upload berhasil! Artikel harusnya muncul di web.\n";
+        } else {
+            echo "Upload gagal! HTTP Code: $httpCode\n";
+            echo "Response:\n$response\n";
+        }
+
+        @unlink($cookieFile);
+    }
+
 }

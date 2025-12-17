@@ -130,7 +130,6 @@ class Rekap extends CI_Controller {
             return ($a['urut_wilayah'] ?? 0) <=> ($b['urut_wilayah'] ?? 0);
         });
 
-        // echo '<pre>'; print_r($pivot); echo '</pre>';die;
         return [
             'pivot' => $pivot,
             'komoditas' => $komoditasList,
@@ -287,7 +286,7 @@ class Rekap extends CI_Controller {
         // ===== BODY =====
         $rowNum++;
         $totalPerKomoditas = [];
-// echo '<pre>'; print_r($populasiPivot); echo '</pre>';die;
+        
         foreach ($populasiPivot as $kec => $row) {
             $col = 0;
             $sheet->setCellValueByColumnAndRow($col, $rowNum, $kec);

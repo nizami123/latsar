@@ -381,7 +381,7 @@
                   <div class="table-responsive">
 
                       <table id="pemotonganDashboard" class="table table-bordered table-striped table-sm">
-                          <thead style="background-color: black; color: white;">
+                          <thead id="pemotonganHead" style="background-color: black; color: white;">
 
                               <tr>
                                   <th rowspan="3" style="min-width:150px; text-align:center;">Kecamatan</th>
@@ -731,7 +731,6 @@ $(document).ready(function(){
                 }
             });
             thead += `</tr>`;
-            console.log(thead);
             // SET <thead> KE TABLE
             $("#populasiHead").html(thead);
 
@@ -838,7 +837,56 @@ $(document).ready(function(){
           success: function(res) {
               let tbody = "";
               let totalPerKomoditasPemotongan = {};
-            console.log(res.komoditas);
+
+              let thead = `<tr> <th rowspan="3" style="min-width:150px; text-align:center;">Kecamatan</th>`;
+
+            // BARIS 1 : NAMA KOMODITAS
+            res.komoditas.forEach(kom => {
+                if (komoditasBertingkatPemotongan.includes(kom)) {
+                    if (komoditasAdaUmurPemotongan[kom]) {
+                        thead += `<th colspan="7" style="text-align:center;">${kom}</th>`;
+                    } else {
+                        thead += `<th colspan="3" style="text-align:center;">${kom}</th>`;
+                    }
+                } else {
+                    thead += `<th rowspan="3" style="text-align:center;">${kom}</th>`;
+                }
+            });
+            thead += `</tr><tr>`;
+
+            // BARIS 2 : JANTAN / BETINA / TOTAL
+            res.komoditas.forEach(kom => {
+                if (komoditasBertingkatPemotongan.includes(kom)) {
+                    if (komoditasAdaUmurPemotongan[kom]) {
+                        thead += `
+                            <th colspan="3" style="text-align:center;">Jantan</th>
+                            <th colspan="3" style="text-align:center;">Betina</th>
+                            <th rowspan="2" style="text-align:center; background-color:black;">Total</th>
+                        `;
+                    } else {
+                        thead += `
+                            <th rowspan="2" style="text-align:center;">Jantan</th>
+                            <th rowspan="2" style="text-align:center;">Betina</th>
+                            <th rowspan="2" style="text-align:center; background-color:black;">Total</th>
+                        `;
+                    }
+                }
+            });
+            thead += `</tr><tr>`;
+
+            // BARIS 3 : ANAK / MUDA / DEWASA
+            res.komoditas.forEach(kom => {
+                if (komoditasBertingkatPemotongan.includes(kom) && komoditasAdaUmurPemotongan[kom]) {
+                    ['Jantan','Betina'].forEach(jk => {
+                        umurListPemotongan.forEach(umur => {
+                            thead += `<th style="text-align:center;">${umur}</th>`;
+                        });
+                    });
+                }
+            });
+            thead += `</tr>`;
+            // SET <thead> KE TABLE
+            $("#pemotonganHead").html(thead);
               // Inisialisasi total
               res.komoditas.forEach(k => {
                   if (komoditasBertingkatPemotongan.includes(k)) {

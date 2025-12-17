@@ -1,16 +1,33 @@
 <style>
-  table.dashboard {
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 13px;
+    }
+    th, td {
+        border: 1px solid #000;
+        padding: 4px;
+        text-align: center;
+    }
+    th {
+        background-color: #000;
+        color: white;
+    }
+
+  #kecamatanDashboard {
     border-collapse: collapse;
     width: 100%;
     table-layout: auto;
   }
 
-  table.dashboard th, 
-  table.dashboard td {
+  #kecamatanDashboard th, 
+  #kecamatanDashboard td {
     white-space: nowrap;
+    text-align: center;      /* Tengah horizontal */
+    vertical-align: middle; 
   }
 
-  table.dashboard thead th {
+  #kecamatanDashboard thead th {
     position: sticky;
     top: 0;
     background: black;
@@ -18,335 +35,254 @@
     z-index: 2;
   }
 
-  table.dashboard td:first-child,
-  table.dashboard th:first-child {
+  #kecamatanDashboard td:first-child,
+  #kecamatanDashboard th:first-child {
     position: sticky;
     left: 0;
     z-index: 3;
     background: black;
     color: white;
   }
-</style>
-
-<div class="content-wrapper">
-  <div class="content-header">
-    <div class="container-fluid">
-      <div class="row mb-2">
-        <div class="col-sm-6">
-          <h1 class="m-0">Rekap Data Ternak</h1>
-        </div>
-        <div class="col-sm-6">
-          <ol class="breadcrumb float-sm-right">
-            <li class="breadcrumb-item"><a href="#">Home</a></li>
-            <li class="breadcrumb-item active">Rekap Data</li>
-          </ol>
-        </div>
-      </div>
+</style>  
+  
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Rekap Kecamatan</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item active">Rekap Kecamatan</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
     </div>
-  </div>
 
-  <section class="content">
-    <div class="container-fluid">
+    <?php foreach ($dataKecamatan as $namaTabel => $data): ?>
 
-      <!-- ======= TABEL MASUK ======= -->
-      <div class="card">
-        <div class="card-header bg-secondary text-white d-flex align-items-center">
-          <h3 class="card-title mb-0">
-            Data Masuk Ternak Kecamatan <?= $kecamatan['nama_wilayah'] ?>
-          </h3>
-          <div class="form-inline ml-auto">
-            <select id="filterBulanMasuk" class="form-control form-control-sm mr-2">
-              <?php for ($i = 1; $i <= 12; $i++): ?>
-                <option value="<?= $i ?>" <?= ($i == $masukBulan) ? 'selected' : '' ?>><?= nama_bulan($i) ?></option>
-              <?php endfor; ?>
-            </select>
-            <select id="filterTahunMasuk" class="form-control form-control-sm mr-2">
-              <?php $tahunSekarang = date('Y'); for ($t = $tahunSekarang; $t >= 2020; $t--): ?>
-                <option value="<?= $t ?>" <?= ($t == $masukTahun) ? 'selected' : '' ?>><?= $t ?></option>
-              <?php endfor; ?>
-            </select>
-            <button id="btnFilterMasuk" class="btn btn-sm btn-light"><i class="fas fa-search"></i> Tampilkan</button>
+    <?php
+        $kecamatanPivot     = $data['pivot'];
+        $kecamatanKomoditas = $data['komoditas'];
+        $kecamatanBulan     = $data['bulan'];
+        $kecamatanTahun     = $data['tahun'];
+        $uid = $namaTabel;
+    ?>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card">
+          <div class="card-header bg-secondary text-white d-flex align-items-center">
+
+            <h3 class="card-title mb-0">
+              Data <?= ucfirst($namaTabel) ?> Ternak
+            </h3>
+
+            <div class="form-inline ml-auto">
+
+              <select id="filterBulan_<?= $uid ?>" class="form-control form-control-sm mr-2">
+                <?php for ($i = 1; $i <= 12; $i++): ?>
+                  <option value="<?= $i ?>" <?= ($i == $kecamatanBulan) ? 'selected' : '' ?>>
+                    <?= nama_bulan($i) ?>
+                  </option>
+                <?php endfor; ?>
+              </select>
+
+              <select id="filterTahun_<?= $uid ?>" class="form-control form-control-sm mr-2">
+                <?php for ($t = date('Y'); $t >= 2020; $t--): ?>
+                  <option value="<?= $t ?>" <?= ($t == $kecamatanTahun) ? 'selected' : '' ?>>
+                    <?= $t ?>
+                  </option>
+                <?php endfor; ?>
+              </select>
+
+              <button class="btn btn-sm btn-light btnFilter" data-tabel="<?= $uid ?>">
+                <i class="fas fa-search"></i> Tampilkan
+              </button>&nbsp;
+
+              <button class="btn btn-sm btn-light btnExport" data-tabel="<?= $uid ?>">
+                <i class="fas fa-file"></i> Download
+              </button>
+
+            </div>
+
+            <div class="card-tools">
+              <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                <i class="fas fa-minus"></i>
+              </button>
+            </div>
+
           </div>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table id="masukDashboard" class="table table-bordered table-striped table-sm dashboard">
-              <thead>
-                <tr>
-                  <th style="min-width:150px;">Desa</th>
-                  <?php foreach ($masukKomoditas as $kom): ?>
-                    <th style="min-width:100px; text-align:center"><?= $kom ?></th>
+
+          <div class="card-body">
+            <div class="table-responsive">
+
+              <table id="kecamatanDashboard" class="table table-bordered table-striped table-sm">
+              <thead id="kecamatanHead_<?= $uid ?>" style="background:black;color:white;">
+              <tr>
+                <th rowspan="3" style="text-align:center;min-width:150px;">Kecamatan</th>
+
+              <?php
+              $umurListKecamatan = ['Anak','Muda','Dewasa'];
+              $komoditasBertingkatKecamatan = [];
+              $komoditasAdaUmurKecamatan = [];
+              $khususJK = ['Kerbau','Kuda'];
+              $paksaUmur = ['Sapi Potong','Sapi Perah'];
+
+              foreach ($kecamatanKomoditas as $kom) {
+                  foreach ($kecamatanPivot as $row) {
+                      if (isset($row[$kom]) && is_array($row[$kom])) {
+                          $first = reset($row[$kom]);
+                          if (is_array($first)) {
+                              $komoditasBertingkatKecamatan[] = $kom;
+                              if (in_array($kom,$khususJK)) $komoditasAdaUmurKecamatan[$kom]=false;
+                              elseif (in_array($kom,$paksaUmur)) $komoditasAdaUmurKecamatan[$kom]=true;
+                              else $komoditasAdaUmurKecamatan[$kom]=isset($first['Jantan']) && is_array($first['Jantan']);
+                          }
+                      }
+                  }
+              }
+              $komoditasBertingkatKecamatan = array_unique($komoditasBertingkatKecamatan);
+              ?>
+
+              <?php foreach ($kecamatanKomoditas as $kom): ?>
+                <?php if (in_array($kom,$komoditasBertingkatKecamatan)): ?>
+                  <th colspan="<?= !empty($komoditasAdaUmurKecamatan[$kom]) ? 7 : 3 ?>" style="text-align:center;"><?= $kom ?></th>
+                <?php else: ?>
+                  <th rowspan="3" style="text-align:center;"><?= $kom ?></th>
+                <?php endif; ?>
+              <?php endforeach; ?>
+              </tr>
+
+              <tr>
+              <?php foreach ($kecamatanKomoditas as $kom): ?>
+                <?php if (in_array($kom,$komoditasBertingkatKecamatan)): ?>
+                  <?php if (!empty($komoditasAdaUmurKecamatan[$kom])): ?>
+                    <th colspan="3">Jantan</th>
+                    <th colspan="3">Betina</th>
+                    <th rowspan="2">Total</th>
+                  <?php else: ?>
+                    <th rowspan="2">Jantan</th>
+                    <th rowspan="2">Betina</th>
+                    <th rowspan="2">Total</th>
+                  <?php endif; ?>
+                <?php endif; ?>
+              <?php endforeach; ?>
+              </tr>
+
+              <tr>
+              <?php foreach ($kecamatanKomoditas as $kom): ?>
+                <?php if (in_array($kom,$komoditasBertingkatKecamatan) && !empty($komoditasAdaUmurKecamatan[$kom])): ?>
+                  <?php foreach (['Jantan','Betina'] as $jk): ?>
+                    <?php foreach ($umurListKecamatan as $u): ?>
+                      <th><?= $u ?></th>
+                    <?php endforeach; ?>
                   <?php endforeach; ?>
-                </tr>
+                <?php endif; ?>
+              <?php endforeach; ?>
+              </tr>
               </thead>
-              <tbody id="masukBody">
-                <?php
-                  $totalPerKomoditas = array_fill_keys($masukKomoditas, 0);
-                  foreach ($masukPivot as $kec => $row):
-                ?>
+
+              <tbody id="kecamatanBody_<?= $uid ?>">
+                <?php foreach ($kecamatanPivot as $kec => $row): ?>
                 <tr>
-                  <td style="background-color:black"><?= $kec ?></td>
-                  <?php foreach ($masukKomoditas as $kom):
-                    $val = isset($row[$kom]) ? $row[$kom] : 0;
-                    $totalPerKomoditas[$kom] += $val;
-                  ?>
-                  <td style="text-align:center"><?= number_format($val) ?></td>
-                  <?php endforeach; ?>
-                </tr>
+                  <?php $bg = !empty($row['status']) ? 'black':'red'; ?>
+                  <td style="background:<?= $bg ?>;color:white;"><?= $kec ?></td>
+
+                <?php foreach ($kecamatanKomoditas as $kom): ?>
+                  <?php if (in_array($kom,$komoditasBertingkatKecamatan)): ?>
+                    <?php $subtotal=0; ?>
+                    <?php if (!empty($komoditasAdaUmurKecamatan[$kom])): ?>
+                      <?php foreach (['Jantan','Betina'] as $jk): ?>
+                        <?php foreach ($umurListKecamatan as $u): ?>
+                          <?php $v = (int)($row[$kom][$jk][$u] ?? 0); $subtotal+=$v; ?>
+                          <td style="background:<?= $bg ?>;text-align:center;"><?= number_format($v) ?></td>
+                        <?php endforeach; ?>
+                      <?php endforeach; ?>
+                    <?php else: ?>
+                      <?php foreach (['Jantan','Betina'] as $jk): ?>
+                        <?php $v = isset($row[$kom][$jk]) ? array_sum($row[$kom][$jk]) : 0; $subtotal+=$v; ?>
+                        <td style="background:<?= $bg ?>;text-align:center;"><?= number_format($v) ?></td>
+                      <?php endforeach; ?>
+                    <?php endif; ?>
+                    <td style="background:<?= $bg ?>;font-weight:bold;text-align:center;"><?= number_format($subtotal) ?></td>
+                  <?php else: ?>
+                    <td style="background:<?= $bg ?>;text-align:center;"><?= number_format((int)($row[$kom] ?? 0)) ?></td>
+                  <?php endif; ?>
                 <?php endforeach; ?>
-                <tr style="font-weight:bold; background-color:black;">
+                </tr>
+                <?php endforeach; ?>  
+                <tr style="background:black;color:white;font-weight:bold">
                   <td>Total</td>
-                  <?php foreach ($masukKomoditas as $kom): ?>
-                    <td style="text-align:center"><?= number_format($totalPerKomoditas[$kom]) ?></td>
+
+                  <?php foreach ($kecamatanKomoditas as $kom): ?>
+
+                    <?php if (in_array($kom,$komoditasBertingkatKecamatan)): ?>
+                      <?php $grand = 0; ?>
+
+                      <?php if (!empty($komoditasAdaUmurKecamatan[$kom])): ?>
+                        <?php foreach (['Jantan','Betina'] as $jk): ?>
+                          <?php foreach ($umurListKecamatan as $u): ?>
+                            <?php
+                              $v = 0;
+                              foreach ($kecamatanPivot as $row) {
+                                $v += (int)($row[$kom][$jk][$u] ?? 0);
+                              }
+                              $grand += $v;
+                            ?>
+                            <td><?= number_format($v) ?></td>
+                          <?php endforeach; ?>
+                        <?php endforeach; ?>
+
+                      <?php else: ?>
+                        <?php foreach (['Jantan','Betina'] as $jk): ?>
+                          <?php
+                            $v = 0;
+                            foreach ($kecamatanPivot as $row) {
+                              $v += array_sum($row[$kom][$jk] ?? []);
+                            }
+                            $grand += $v;
+                          ?>
+                          <td><?= number_format($v) ?></td>
+                        <?php endforeach; ?>
+                      <?php endif; ?>
+
+                      <td><?= number_format($grand) ?></td>
+
+                    <?php else: ?>
+                      <?php
+                        $v = 0;
+                        foreach ($kecamatanPivot as $row) {
+                          $v += (int)($row[$kom] ?? 0);
+                        }
+                      ?>
+                      <td><?= number_format($v) ?></td>
+                    <?php endif; ?>
+
                   <?php endforeach; ?>
                 </tr>
+
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- ======= TABEL KELUAR ======= -->
-      <div class="card">
-        <div class="card-header bg-secondary text-white d-flex align-items-center">
-          <h3 class="card-title mb-0">
-            Data Keluar Ternak Kecamatan <?= $kecamatan['nama_wilayah'] ?>
-          </h3>
-          <div class="form-inline ml-auto">
-            <select id="filterBulanKeluar" class="form-control form-control-sm mr-2">
-              <?php for ($i = 1; $i <= 12; $i++): ?>
-                <option value="<?= $i ?>" <?= ($i == $keluarBulan) ? 'selected' : '' ?>><?= nama_bulan($i) ?></option>
-              <?php endfor; ?>
-            </select>
-            <select id="filterTahunKeluar" class="form-control form-control-sm mr-2">
-              <?php $tahunSekarang = date('Y'); for ($t = $tahunSekarang; $t >= 2020; $t--): ?>
-                <option value="<?= $t ?>" <?= ($t == $keluarTahun) ? 'selected' : '' ?>><?= $t ?></option>
-              <?php endfor; ?>
-            </select>
-            <button id="btnFilterKeluar" class="btn btn-sm btn-light"><i class="fas fa-search"></i> Tampilkan</button>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table id="keluarDashboard" class="table table-bordered table-striped table-sm dashboard">
-              <thead>
-                <tr>
-                  <th style="min-width:150px;">Desa</th>
-                  <?php foreach ($keluarKomoditas as $kom): ?>
-                    <th style="min-width:100px; text-align:center"><?= $kom ?></th>
-                  <?php endforeach; ?>
-                </tr>
-              </thead>
-              <tbody id="keluarBody">
-                <?php
-                  $totalPerKomoditas = array_fill_keys($keluarKomoditas, 0);
-                  foreach ($keluarPivot as $kec => $row):
-                ?>
-                <tr>
-                  <td style="background-color:black"><?= $kec ?></td>
-                  <?php foreach ($keluarKomoditas as $kom):
-                    $val = isset($row[$kom]) ? $row[$kom] : 0;
-                    $totalPerKomoditas[$kom] += $val;
-                  ?>
-                  <td style="text-align:center"><?= number_format($val) ?></td>
-                  <?php endforeach; ?>
-                </tr>
-                <?php endforeach; ?>
-                <tr style="font-weight:bold; background-color:black;">
-                  <td>Total</td>
-                  <?php foreach ($keluarKomoditas as $kom): ?>
-                    <td style="text-align:center"><?= number_format($totalPerKomoditas[$kom]) ?></td>
-                  <?php endforeach; ?>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ======= TABEL KELAHIRAN ======= -->
-      <div class="card">
-        <div class="card-header bg-secondary text-white d-flex align-items-center">
-          <h3 class="card-title mb-0">
-            Data Kelahiran Ternak Kecamatan <?= $kecamatan['nama_wilayah'] ?>
-          </h3>
-          <div class="form-inline ml-auto">
-            <select id="filterBulanKelahiran" class="form-control form-control-sm mr-2">
-              <?php for ($i = 1; $i <= 12; $i++): ?>
-                <option value="<?= $i ?>" <?= ($i == $kelahiranBulan) ? 'selected' : '' ?>><?= nama_bulan($i) ?></option>
-              <?php endfor; ?>
-            </select>
-            <select id="filterTahunKelahiran" class="form-control form-control-sm mr-2">
-              <?php $tahunSekarang = date('Y'); for ($t = $tahunSekarang; $t >= 2020; $t--): ?>
-                <option value="<?= $t ?>" <?= ($t == $kelahiranTahun) ? 'selected' : '' ?>><?= $t ?></option>
-              <?php endfor; ?>
-            </select>
-            <button id="btnFilterKelahiran" class="btn btn-sm btn-light"><i class="fas fa-search"></i> Tampilkan</button>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table id="kelahiranDashboard" class="table table-bordered table-striped table-sm dashboard">
-              <thead>
-                <tr>
-                  <th style="min-width:150px;">Desa</th>
-                  <?php foreach ($kelahiranKomoditas as $kom): ?>
-                    <th style="min-width:100px; text-align:center"><?= $kom ?></th>
-                  <?php endforeach; ?>
-                </tr>
-              </thead>
-              <tbody id="kelahiranBody">
-                <?php
-                  $totalPerKomoditas = array_fill_keys($kelahiranKomoditas, 0);
-                  foreach ($kelahiranPivot as $kec => $row):
-                ?>
-                <tr>
-                  <td style="background-color:black"><?= $kec ?></td>
-                  <?php foreach ($kelahiranKomoditas as $kom):
-                    $val = isset($row[$kom]) ? $row[$kom] : 0;
-                    $totalPerKomoditas[$kom] += $val;
-                  ?>
-                  <td style="text-align:center"><?= number_format($val) ?></td>
-                  <?php endforeach; ?>
-                </tr>
-                <?php endforeach; ?>
-                <tr style="font-weight:bold; background-color:black;">
-                  <td>Total</td>
-                  <?php foreach ($kelahiranKomoditas as $kom): ?>
-                    <td style="text-align:center"><?= number_format($totalPerKomoditas[$kom]) ?></td>
-                  <?php endforeach; ?>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ======= TABEL KEMATIAN ======= -->
-      <div class="card">
-        <div class="card-header bg-secondary text-white d-flex align-items-center">
-          <h3 class="card-title mb-0">
-            Data Kematian Ternak Kecamatan <?= $kecamatan['nama_wilayah'] ?>
-          </h3>
-          <div class="form-inline ml-auto">
-            <select id="filterBulanKematian" class="form-control form-control-sm mr-2">
-              <?php for ($i = 1; $i <= 12; $i++): ?>
-                <option value="<?= $i ?>" <?= ($i == $kematianBulan) ? 'selected' : '' ?>><?= nama_bulan($i) ?></option>
-              <?php endfor; ?>
-            </select>
-            <select id="filterTahunKematian" class="form-control form-control-sm mr-2">
-              <?php $tahunSekarang = date('Y'); for ($t = $tahunSekarang; $t >= 2020; $t--): ?>
-                <option value="<?= $t ?>" <?= ($t == $kematianTahun) ? 'selected' : '' ?>><?= $t ?></option>
-              <?php endfor; ?>
-            </select>
-            <button id="btnFilterKematian" class="btn btn-sm btn-light"><i class="fas fa-search"></i> Tampilkan</button>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table id="kematianDashboard" class="table table-bordered table-striped table-sm dashboard">
-              <thead>
-                <tr>
-                  <th style="min-width:150px;">Desa</th>
-                  <?php foreach ($kematianKomoditas as $kom): ?>
-                    <th style="min-width:100px; text-align:center"><?= $kom ?></th>
-                  <?php endforeach; ?>
-                </tr>
-              </thead>
-              <tbody id="kematianBody">
-                <?php
-                  $totalPerKomoditas = array_fill_keys($kematianKomoditas, 0);
-                  foreach ($kematianPivot as $kec => $row):
-                ?>
-                <tr>
-                  <td style="background-color:black"><?= $kec ?></td>
-                  <?php foreach ($kematianKomoditas as $kom):
-                    $val = isset($row[$kom]) ? $row[$kom] : 0;
-                    $totalPerKomoditas[$kom] += $val;
-                  ?>
-                  <td style="text-align:center"><?= number_format($val) ?></td>
-                  <?php endforeach; ?>
-                </tr>
-                <?php endforeach; ?>
-                <tr style="font-weight:bold; background-color:black;">
-                  <td>Total</td>
-                  <?php foreach ($kematianKomoditas as $kom): ?>
-                    <td style="text-align:center"><?= number_format($totalPerKomoditas[$kom]) ?></td>
-                  <?php endforeach; ?>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ======= TABEL PEMOTONGAN ======= -->
-      <div class="card">
-        <div class="card-header bg-secondary text-white d-flex align-items-center">
-          <h3 class="card-title mb-0">
-            Data Pemotongan Ternak Kecamatan <?= $kecamatan['nama_wilayah'] ?>
-          </h3>
-          <div class="form-inline ml-auto">
-            <select id="filterBulanPemotongan" class="form-control form-control-sm mr-2">
-              <?php for ($i = 1; $i <= 12; $i++): ?>
-                <option value="<?= $i ?>" <?= ($i == $pemotonganBulan) ? 'selected' : '' ?>><?= nama_bulan($i) ?></option>
-              <?php endfor; ?>
-            </select>
-            <select id="filterTahunPemotongan" class="form-control form-control-sm mr-2">
-              <?php $tahunSekarang = date('Y'); for ($t = $tahunSekarang; $t >= 2020; $t--): ?>
-                <option value="<?= $t ?>" <?= ($t == $pemotonganTahun) ? 'selected' : '' ?>><?= $t ?></option>
-              <?php endfor; ?>
-            </select>
-            <button id="btnFilterPemotongan" class="btn btn-sm btn-light"><i class="fas fa-search"></i> Tampilkan</button>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table id="pemotonganDashboard" class="table table-bordered table-striped table-sm dashboard">
-              <thead>
-                <tr>
-                  <th style="min-width:150px;">Desa</th>
-                  <?php foreach ($pemotonganKomoditas as $kom): ?>
-                    <th style="min-width:100px; text-align:center"><?= $kom ?></th>
-                  <?php endforeach; ?>
-                </tr>
-              </thead>
-              <tbody id="pemotonganBody">
-                <?php
-                  $totalPerKomoditas = array_fill_keys($pemotonganKomoditas, 0);
-                  foreach ($pemotonganPivot as $kec => $row):
-                ?>
-                <tr>
-                  <td style="background-color:black"><?= $kec ?></td>
-                  <?php foreach ($pemotonganKomoditas as $kom):
-                    $val = isset($row[$kom]) ? $row[$kom] : 0;
-                    $totalPerKomoditas[$kom] += $val;
-                  ?>
-                  <td style="text-align:center"><?= number_format($val) ?></td>
-                  <?php endforeach; ?>
-                </tr>
-                <?php endforeach; ?>
-                <tr style="font-weight:bold; background-color:black;">
-                  <td>Total</td>
-                  <?php foreach ($pemotonganKomoditas as $kom): ?>
-                    <td style="text-align:center"><?= number_format($totalPerKomoditas[$kom]) ?></td>
-                  <?php endforeach; ?>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
+    <?php endforeach; ?>
 
     </div>
-  </section>
-</div>
-<aside class="control-sidebar control-sidebar-dark">
-    <!-- Control sidebar content goes here -->
-  </aside>
-   </body>
-</html>
+    <aside class="control-sidebar control-sidebar-dark">
+      <!-- Control sidebar content goes here -->
+    </aside>
+    </body>
+  </html>
   <footer class="main-footer">
     <strong>Copyright &copy; 2025 <a href="#">Ahmad Alfian Nizami</a></strong>
   </footer>
@@ -362,6 +298,8 @@
 <script src="<?=base_url()?>assets/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
 <!-- AdminLTE App -->
 <script src="<?=base_url()?>assets/js/adminlte.js"></script>
+
+<!-- PAGE PLUGINS -->
 <!-- jQuery Mapael -->
 <script src="<?=base_url()?>assets/plugins/jquery-mousewheel/jquery.mousewheel.js"></script>
 <script src="<?=base_url()?>assets/plugins/raphael/raphael.min.js"></script>
@@ -374,42 +312,207 @@
 <script src="<?=base_url()?>assets/js/pages/dashboard2.js"></script>
 
 <script>
-  function setupFilter(btnId, bulanId, tahunId, tbodyId, url) {
-  $(btnId).on('click', function(){
-    let bulan = $(bulanId).val();
-    let tahun = $(tahunId).val();
+$(document).ready(function(){
+
+  // data statis dari PHP (cukup 1x)
+  const komoditasBertingkatKecamatan = <?= json_encode(array_values($komoditasBertingkatKecamatan)) ?>;
+  const komoditasAdaUmurKecamatan    = <?= json_encode($komoditasAdaUmurKecamatan) ?>;
+  const umurListKecamatan            = <?= json_encode($umurListKecamatan) ?>;
+
+  /* =========================
+     EXPORT
+  ==========================*/
+  $(document).on('click', '.btnExport', function () {
+
+    let tabel     = $(this).data('tabel');
+    let bulan     = $('#filterBulan_' + tabel).val();
+    let tahun     = $('#filterTahun_' + tabel).val();
+
+    window.location.href =
+      '<?= base_url("kecamatan/export") ?>' +
+      '?tabel=' + tabel +
+      '&bulan=' + bulan +
+      '&tahun=' + tahun ;
+  });
+
+  /* =========================
+     FILTER (AJAX)
+  ==========================*/
+  $(document).on('click', '.btnFilter', function () {
+
+    let tabel     = $(this).data('tabel');
+    let bulan     = $('#filterBulan_' + tabel).val();
+    let tahun     = $('#filterTahun_' + tabel).val();
+
     $.ajax({
-      url: url,
+      url: "<?= base_url('kecamatan/get_data_kecamatan') ?>",
       type: "GET",
-      data: { bulan: bulan, tahun: tahun },
       dataType: "json",
-      success: function(res){
-        let tbody = "";
+      data: {
+        tabel: tabel,
+        bulan: bulan,
+        tahun: tahun
+      },
+      success: function(res) {
+
+        let thead = `<tr>
+          <th rowspan="3" style="min-width:150px; text-align:center;">Kecamatan</th>`;
+
+        /* =========================
+           HEADER BARIS 1 (KOMODITAS)
+        ==========================*/
+        res.komoditas.forEach(kom => {
+          if (komoditasBertingkatKecamatan.includes(kom)) {
+            thead += `<th colspan="${komoditasAdaUmurKecamatan[kom] ? 7 : 3}" style="text-align:center;">${kom}</th>`;
+          } else {
+            thead += `<th rowspan="3" style="text-align:center;">${kom}</th>`;
+          }
+        });
+
+        thead += `</tr><tr>`;
+
+        /* =========================
+           HEADER BARIS 2 (JK / TOTAL)
+        ==========================*/
+        res.komoditas.forEach(kom => {
+          if (komoditasBertingkatKecamatan.includes(kom)) {
+            if (komoditasAdaUmurKecamatan[kom]) {
+              thead += `
+                <th colspan="3">Jantan</th>
+                <th colspan="3">Betina</th>
+                <th rowspan="2">Total</th>`;
+            } else {
+              thead += `
+                <th rowspan="2">Jantan</th>
+                <th rowspan="2">Betina</th>
+                <th rowspan="2">Total</th>`;
+            }
+          }
+        });
+
+        thead += `</tr><tr>`;
+
+        /* =========================
+           HEADER BARIS 3 (UMUR)
+        ==========================*/
+        res.komoditas.forEach(kom => {
+          if (komoditasBertingkatKecamatan.includes(kom) && komoditasAdaUmurKecamatan[kom]) {
+            ['Jantan','Betina'].forEach(() => {
+              umurListKecamatan.forEach(u => {
+                thead += `<th>${u}</th>`;
+              });
+            });
+          }
+        });
+
+        thead += `</tr>`;
+
+        $('#kecamatanHead_' + tabel).html(thead);
+
+        /* =========================
+           BODY
+        ==========================*/
+        let tbody = '';
         let total = {};
-        res.komoditas.forEach(k => total[k] = 0);
-        $.each(res.data, function(kec, row){
-          tbody += `<tr><td style="background-color:black">${kec}</td>`;
+
+        res.komoditas.forEach(k => {
+          if (komoditasBertingkatKecamatan.includes(k)) {
+            total[k] = komoditasAdaUmurKecamatan[k]
+              ? { Jantan:{}, Betina:{} }
+              : { Jantan:0, Betina:0 };
+
+            if (komoditasAdaUmurKecamatan[k]) {
+              umurListKecamatan.forEach(u => {
+                total[k].Jantan[u] = 0;
+                total[k].Betina[u] = 0;
+              });
+            }
+          } else {
+            total[k] = 0;
+          }
+        });
+
+        $.each(res.kecamatan, function(kec, row) {
+
+          let bg = row.status ? 'black' : 'red';
+          tbody += `<tr><td style="background:${bg};color:white">${kec}</td>`;
+
           res.komoditas.forEach(k => {
-            let val = row[k] ? row[k] : 0;
-            total[k] += parseInt(val);
-            tbody += `<td style="text-align:center">${Number(val).toLocaleString()}</td>`;
+
+            if (komoditasBertingkatKecamatan.includes(k)) {
+
+              let subtotal = 0;
+
+              if (komoditasAdaUmurKecamatan[k]) {
+                ['Jantan','Betina'].forEach(jk => {
+                  umurListKecamatan.forEach(u => {
+                    let v = parseInt(row[k]?.[jk]?.[u] || 0);
+                    total[k][jk][u] += v;
+                    subtotal += v;
+                    tbody += `<td style="background:${bg};text-align:center">${v.toLocaleString()}</td>`;
+                  });
+                });
+              } else {
+                ['Jantan','Betina'].forEach(jk => {
+                  let v = parseInt(Object.values(row[k]?.[jk] || {0:0})[0]);
+                  total[k][jk] += v;
+                  subtotal += v;
+                  tbody += `<td style="background:${bg};text-align:center">${v.toLocaleString()}</td>`;
+                });
+              }
+
+              tbody += `<td style="background:${bg};font-weight:bold;text-align:center">${subtotal.toLocaleString()}</td>`;
+
+            } else {
+              let v = parseInt(row[k] || 0);
+              total[k] += v;
+              tbody += `<td style="background:${bg};text-align:center">${v.toLocaleString()}</td>`;
+            }
           });
+
           tbody += `</tr>`;
         });
-        tbody += `<tr style="font-weight:bold; background-color:black"><td>Total</td>`;
-        res.komoditas.forEach(k => { tbody += `<td style="text-align:center">${Number(total[k]).toLocaleString()}</td>`; });
+
+        /* =========================
+           TOTAL BARIS
+        ==========================*/
+        tbody += `<tr style="background:black;color:white;font-weight:bold"><td>Total</td>`;
+
+        res.komoditas.forEach(k => {
+          if (komoditasBertingkatKecamatan.includes(k)) {
+            let sum = 0;
+            if (komoditasAdaUmurKecamatan[k]) {
+              ['Jantan','Betina'].forEach(jk => {
+                umurListKecamatan.forEach(u => {
+                  let v = total[k][jk][u];
+                  sum += v;
+                  tbody += `<td>${v.toLocaleString()}</td>`;
+                });
+              });
+            } else {
+              ['Jantan','Betina'].forEach(jk => {
+                let v = total[k][jk];
+                sum += v;
+                tbody += `<td>${v.toLocaleString()}</td>`;
+              });
+            }
+            tbody += `<td>${sum.toLocaleString()}</td>`;
+          } else {
+            tbody += `<td>${total[k].toLocaleString()}</td>`;
+          }
+        });
+
         tbody += `</tr>`;
-        $(tbodyId).html(tbody);
+
+        $('#kecamatanBody_' + tabel).html(tbody);
       }
     });
   });
-}
 
-// Setup semua filter
-setupFilter('#btnFilterPopulasi', '#filterBulanPopulasi', '#filterTahunPopulasi', '#populasiBody', "<?= base_url('kecamatan/get_data_populasi') ?>");
-setupFilter('#btnFilterMasuk', '#filterBulanMasuk', '#filterTahunMasuk', '#masukBody', "<?= base_url('kecamatan/get_data_masuk') ?>");
-setupFilter('#btnFilterKeluar', '#filterBulanKeluar', '#filterTahunKeluar', '#keluarBody', "<?= base_url('kecamatan/get_data_keluar') ?>");
-setupFilter('#btnFilterKelahiran', '#filterBulanKelahiran', '#filterTahunKelahiran', '#kelahiranBody', "<?= base_url('kecamatan/get_data_kelahiran') ?>");
-setupFilter('#btnFilterKematian', '#filterBulanKematian', '#filterTahunKematian', '#kematianBody', "<?= base_url('kecamatan/get_data_kematian') ?>");
-setupFilter('#btnFilterPemotongan','#filterBulanPemotongan','#filterTahunPemotongan','#pemotonganBody',"<?= base_url('kecamatan/get_data_pemotongan') ?>");
+});
 </script>
+
+</body>
+</html>
+
+  
