@@ -156,6 +156,14 @@
             <p>HARGA KOMODITAS</p>
           </a>
         </li>
+        <li class="nav-item">
+          <a href="<?= base_url('pasar_hewan') ?>" 
+            class="nav-link <?= ($this->uri->segment(1) == 'pasar_hewan' && $this->uri->segment(2) != 'rekap')
+            ? 'active' : '' ?>">
+            <i class="nav-icon fas fa-balance-scale"></i>
+            <p>PASAR HEWAN</p>
+          </a>
+        </li>
 
         <li class="nav-item">
           <a href="<?= base_url('masuk') ?>" 
@@ -194,15 +202,6 @@
             class="nav-link <?= ($this->uri->segment(1) == 'pemotongan') ? 'active' : '' ?>">
             <i class="nav-icon fas fa-cut"></i>
             <p>PEMOTONGAN</p>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="<?= base_url('pasar_hewan') ?>" 
-            class="nav-link <?= ($this->uri->segment(1) == 'pasar_hewan' && $this->uri->segment(2) != 'rekap')
-            ? 'active' : '' ?>">
-            <i class="nav-icon fas fa-balance-scale"></i>
-            <p>PASAR HEWAN</p>
           </a>
         </li>
         <?php endif; ?>
