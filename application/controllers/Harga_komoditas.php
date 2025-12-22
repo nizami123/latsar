@@ -73,12 +73,16 @@ class Harga_komoditas extends CI_Controller {
             )->row();
 
             if (!$komoditas) continue;
-
+            // print_r($komoditas);
+            // print_r($harga);
             // cek data existing
             $cek = $this->db->get_where('trx_harga_komoditas', [
                 'id_komoditas' => $komoditas->id_komoditas,
                 'bulan'        => $bulan,
-                'tahun'        => $tahun
+                'tahun'        => $tahun,
+                'id_wilayah'   => $this->db->get_where('master_wilayah', [
+                                    'kode' => $this->session->userdata('kode')
+                                ])->row()->id_wilayah
             ])->row();
 
             if ($cek) {
