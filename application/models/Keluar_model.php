@@ -6,6 +6,7 @@ class Keluar_model extends CI_Model {
         $this->db->join('master_wilayah w','w.id_wilayah=p.id_wilayah');
         $this->db->join('master_komoditas k','k.id_komoditas=p.id_komoditas');
         $this->db->join('master_desa d','d.kode_desa=p.kode_desa','left');
+        $this->db->where('jumlah >', 0);
         if($this->session->userdata('jabatan') == 'Admin Kecamatan') {
             $this->db->where('w.kode', $this->session->userdata('kode'));
         }
