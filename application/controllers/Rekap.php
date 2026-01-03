@@ -286,7 +286,6 @@ class Rekap extends CI_Controller {
         // ===== BODY =====
         $rowNum++;
         $totalPerKomoditas = [];
-        
         foreach ($populasiPivot as $kec => $row) {
             $col = 0;
             $sheet->setCellValueByColumnAndRow($col, $rowNum, $kec);
@@ -308,7 +307,7 @@ class Rekap extends CI_Controller {
                         }
                     } else {
                         foreach (['Jantan','Betina'] as $jk) {
-                            $val = isset($row[$kom][$jk]) ? (int)$row[$kom][$jk] : 0;
+                            $val = array_sum($row[$kom][$jk] ?? []);
                             $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
                             $totalKomoditasRow += $val;
                             $totalPerKomoditas[$kom][$jk] = ($totalPerKomoditas[$kom][$jk] ?? 0) + $val;
