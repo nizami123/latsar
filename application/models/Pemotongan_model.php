@@ -1,7 +1,7 @@
 <?php
 class Pemotongan_model extends CI_Model {
     public function getAll() {
-        $this->db->select('p.*, w.nama_wilayah, k.nama_komoditas');
+        $this->db->select('p.*, w.nama_wilayah,w.kode, k.nama_komoditas, d.nama_desa');
         $this->db->from('trx_pemotongan p');
         $this->db->join('master_wilayah w','w.id_wilayah=p.id_wilayah');
         $this->db->join('master_komoditas k','k.id_komoditas=p.id_komoditas');

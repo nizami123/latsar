@@ -76,6 +76,17 @@ class Kecamatan extends CI_Controller {
 
         // Ambil data pivot dari model
         $raw_data = $this->Kecamatan_model->get_pivot_data($tabel, $bulan, $tahun);
+        if ($tabel == 'pemotongan') {
+            foreach ($raw_data as &$row) {
+                if (
+                    (empty($row['umur'])) &&
+                    ($row['nama_komoditas'] === 'Sapi Potong' || $row['nama_komoditas'] === 'Sapi Perah')
+                ) {
+                    $row['umur'] = 'Dewasa';
+                }
+            }
+            unset($row);
+        }
 
         $pivot = [];
         $komoditasList = [];

@@ -24,6 +24,7 @@
                   </div>
                 </th>
                 <th>Bulan Tahun</th>
+                <th>Desa</th>
                 <th>Wilayah</th>
                 <th>Komoditas</th>
                 <th>Jumlah</th>
@@ -40,6 +41,7 @@
                   </div>
                 </td>
                 <td><?= nama_bulan($p->bulan) ?> <?= $p->tahun ?></td>
+                <td><?= $p->nama_desa ?></td>
                 <td><?= $p->nama_wilayah ?></td>
                 <td>
                     <?= $p->nama_komoditas ?>

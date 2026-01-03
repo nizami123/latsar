@@ -31,6 +31,7 @@ class Kecamatan_model extends CI_Model {
         $this->db->where('d.kode', $this->session->userdata('kode')); // kode kecamatan yang dipilih
         $this->db->group_by([
             'p.kode_desa',
+            'd.kode_desa',
             'p.id_komoditas',
             'd.nama_desa',
             'k.nama_komoditas',
