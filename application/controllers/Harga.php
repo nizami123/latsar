@@ -204,7 +204,7 @@ class Harga extends CI_Controller {
             show_error('File font tidak ditemukan di: ' . $font_path);
         }
 
-        $upload_path = FCPATH . 'uploads/';
+        $upload_path = FCPATH . 'uploads/harga/';
         if (!is_dir($upload_path)) {
             mkdir($upload_path, 0777, true);
         }

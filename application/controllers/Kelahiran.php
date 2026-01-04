@@ -257,14 +257,45 @@ class Kelahiran extends CI_Controller {
     public function upload_excel() {
         $bulan = $this->input->post('bulan');
         $tahun = $this->input->post('tahun');
+        $kecamatan = $this->db->get_where('master_wilayah', [
+                        'kode' => $this->session->userdata('kode')
+                    ])->row();
 
-        if ($tahun < 2025 || ($tahun == 2025 && $bulan < 10)) {
+        $batas_bawah = strtotime('2025-10-01');
+        $input_date = strtotime($tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT) . '-01');
+
+        $now = strtotime(date('Y-m-01'));
+
+        // ❌ jika kurang dari Oktober 2025
+        if ($input_date < $batas_bawah) {
             $this->session->set_flashdata('error', 'Bulan yang dimasukkan sudah dikunci.');
             redirect('kelahiran');
-            return; // hentikan proses
+            return;
+        }
+
+        // ❌ jika lebih dari bulan sekarang
+        if ($input_date > $now) {
+            $this->session->set_flashdata('error', 'Bulan dan tahun tidak boleh melebihi bulan berjalan.');
+            redirect('kelahiran');
+            return;
         }
 
         $file = $_FILES['file_excel']['tmp_name'];
+        $file_ext  = pathinfo($_FILES['file_excel']['name'], PATHINFO_EXTENSION);
+        $nama_wilayah = preg_replace('/[^A-Za-z0-9_\-]/', '_', $kecamatan->nama_wilayah);
+        $nama_file = $nama_wilayah . '_' . $bulan . '_' . $tahun . '.' . $file_ext;
+        $upload_path = FCPATH . 'uploads/kelahiran/';
+
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0777, true);
+        }
+        move_uploaded_file($file_tmp, $upload_path . $nama_file);
+        $full_path = $upload_path . $nama_file;
+
+        if (file_exists($full_path)) {
+            unlink($full_path);
+        }
+        move_uploaded_file($file_tmp, $full_path);
 
         require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
 
@@ -287,10 +318,6 @@ class Kelahiran extends CI_Controller {
 
         // Ambil data mulai baris ke-4, reindex array
         $sheet_data = array_slice($sheet, 4);
-
-        $kecamatan = $this->db->get_where('master_wilayah', [
-                        'kode' => $this->session->userdata('kode')
-                    ])->row();
 
         $this->db->where('bulan', $bulan);
         $this->db->where('tahun', $tahun);
