@@ -327,8 +327,8 @@ class Harga extends CI_Controller {
         // --------------------
         // 3️⃣ Persiapkan file thumbnail + konten
         // --------------------
-        $thumbnailPath = FCPATH . 'uploads/Thumbnail.jpg';
-        $kontenImagePath = FCPATH . 'uploads/harga-' . date('Y-m-d', strtotime($tanggal)) . '.jpg';
+        $thumbnailPath = FCPATH . 'uploads/harga/Thumbnail.jpg';
+        $kontenImagePath = FCPATH . 'uploads/harga/harga-' . date('Y-m-d', strtotime($tanggal)) . '.jpg';
 
         if (!file_exists($thumbnailPath) || !file_exists($kontenImagePath)) {
             echo "File thumbnail atau konten tidak ditemukan!\n"; return;
