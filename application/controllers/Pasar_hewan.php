@@ -183,17 +183,19 @@ class Pasar_hewan extends CI_Controller {
         if (!is_dir($upload_path)) {
             mkdir($upload_path, 0777, true);
         }
-        move_uploaded_file($file, $upload_path . $nama_file);
+        
         $full_path = $upload_path . $nama_file;
 
         if (file_exists($full_path)) {
             unlink($full_path);
         }
-        move_uploaded_file($file, $full_path);
+        move_uploaded_file($file, $upload_path . $nama_file);
+        
+        require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
+        $file = $full_path;
 
-        require APPPATH.'third_party/PHPExcel/Classes/PHPExcel.php';
-
-        $objPHPExcel = PHPExcel_IOFactory::load($_FILES['file_excel']['tmp_name']);
+        // Load file Excel
+        $objPHPExcel = PHPExcel_IOFactory::load($file);
         $sheet = $objPHPExcel->getActiveSheet();
 
         $komoditas = $this->Komoditas_model->getKomoditasIndexed(); // nama => id
