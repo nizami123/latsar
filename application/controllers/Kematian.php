@@ -289,13 +289,13 @@ class Kematian extends CI_Controller {
         if (!is_dir($upload_path)) {
             mkdir($upload_path, 0777, true);
         }
-        move_uploaded_file($file_tmp, $upload_path . $nama_file);
+        move_uploaded_file($file, $upload_path . $nama_file);
         $full_path = $upload_path . $nama_file;
 
         if (file_exists($full_path)) {
             unlink($full_path);
         }
-        move_uploaded_file($file_tmp, $full_path);
+        move_uploaded_file($file, $full_path);
 
         require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
 
