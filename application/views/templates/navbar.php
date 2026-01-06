@@ -39,6 +39,18 @@
             <p>Rekap Kecamatan</p>
           </a>
         </li>
+
+         <li class="nav-item">
+          <a href="<?= base_url('pasar_hewan/rekap') ?>" 
+            class="nav-link <?= 
+                ($this->uri->segment(1) == 'pasar_hewan' && $this->uri->segment(2) == 'rekap')
+                ? 'active' 
+                : '' 
+            ?>">
+            <i class="nav-icon fas fa-balance-scale"></i>
+            <p>Rekap Pasar Hewan</p>
+          </a>
+        </li>
         <?php endif; ?>
 
       <?php if ($this->session->userdata('jabatan') == 'Bidang' || $this->session->userdata('jabatan') == 'Admin Dinas'): ?>
