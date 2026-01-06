@@ -33,6 +33,7 @@
             </thead>
             <tbody>
               <?php foreach($masuk as $p): ?>
+              <?php if ($p->jumlah == 0) continue; ?>
               <tr>
                 <td style="text-align: center;">
                   <div class="custom-checkbox">
