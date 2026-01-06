@@ -32,6 +32,7 @@
             </thead>
             <tbody>
               <?php $no=1; foreach($pasar as $p): ?>
+              <?php if ($p->jumlah == 0) continue; ?>
               <tr>
                 <td><?= $no++ ?></td>
                 <td><?= nama_bulan($p->bulan) ?> <?= $p->tahun ?></td>
