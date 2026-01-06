@@ -205,6 +205,11 @@ class Pasar_hewan extends CI_Controller {
             $wilayah_master = $this->Komoditas_model->getKecamatanIndexed(); // nama => id
         }
 
+        $this->db->where('bulan', $bulan);
+        $this->db->where('tahun', $tahun);
+        $this->db->where('id_wilayah', $kecamatan->id_wilayah);
+        $this->db->delete('trx_pasar_hewan');
+
         $highestRow = $sheet->getHighestRow();
 
         $map = [
@@ -215,6 +220,8 @@ class Pasar_hewan extends CI_Controller {
             'Ayam Buras'   => ['K','L'],
             'Itik'         => ['M','N']
         ];
+
+
 
         for ($row = 4; $row <= $highestRow; $row++) {
 
