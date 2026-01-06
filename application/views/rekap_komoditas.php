@@ -103,13 +103,14 @@ foreach ($komoditas as $k) {
 <tbody id="bodyHarga">
 
 <?php
-$jumlahKec = count($pivot);
 $rata2 = [];
+$jumlahKecNonZero = [];
 
 // init
 foreach ($group as $items) {
     foreach ($items as $k) {
         $rata2[$k->nama_komoditas] = 0;
+        $jumlahKecNonZero[$k->nama_komoditas] = 0;
     }
 }
 ?>
@@ -122,6 +123,10 @@ foreach ($group as $items) {
             <?php
                 $val = $row[$k->nama_komoditas] ?? 0;
                 $rata2[$k->nama_komoditas] += $val;
+
+                if ($val != 0) {
+                    $jumlahKecNonZero[$k->nama_komoditas]++;
+                }
             ?>
             <td style="text-align:right;">
                 <?= number_format($val) ?>
@@ -138,12 +143,15 @@ foreach ($group as $items) {
         <?php foreach ($items as $k): ?>
             <td style="text-align:right;">
                 <?= number_format(
-                    $jumlahKec ? ($rata2[$k->nama_komoditas] / $jumlahKec) : 0
+                    $jumlahKecNonZero[$k->nama_komoditas] > 0
+                        ? ($rata2[$k->nama_komoditas] / $jumlahKecNonZero[$k->nama_komoditas])
+                        : 0
                 ) ?>
             </td>
         <?php endforeach; ?>
     <?php endforeach; ?>
 </tr>
+
 
 </tbody>
 </table>
