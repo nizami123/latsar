@@ -38,6 +38,11 @@
                 <td><?= nama_bulan($p->bulan) ?> <?= $p->tahun ?></td>
                 <td><?= $p->nama_desa ?></td>
                 <td><?= $p->nama_wilayah ?></td>
+                <?php if ($p->nama_komoditas == 'Sapi Potong') {
+                  $p->nama_komoditas = 'Sapi';
+                }else if ($p->nama_komoditas == 'Ayam Pedaging') {
+                  $p->nama_komoditas = 'Ayam Ras';
+                } ?>
                 <td><?= $p->nama_komoditas ?></td>
                 <td>
                   <span class="badge badge-<?= $p->status_pasar == 'Masuk' ? 'primary' : 'success' ?>">

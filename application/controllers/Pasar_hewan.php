@@ -35,7 +35,7 @@ class Pasar_hewan extends CI_Controller {
             $label   = 'Kecamatan';
         }
 
-        $komoditas = ['Kuda','Sapi','Kerbau','Kambing','Domba','Babi'];
+        $komoditas = ['Sapi','Kambing','Domba','Ayam Ras','Ayam Buras','Itik'];
 
         require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
         $objPHPExcel = new PHPExcel();
@@ -208,12 +208,12 @@ class Pasar_hewan extends CI_Controller {
         $highestRow = $sheet->getHighestRow();
 
         $map = [
-            'Kuda'     => ['C','D'],
-            'Sapi'     => ['E','F'],
-            'Kerbau'   => ['G','H'],
-            'Kambing'  => ['I','J'],
-            'Domba'    => ['K','L'],
-            'Babi'     => ['M','N']
+            'Sapi Potong'  => ['C','D'],
+            'Kambing'      => ['E','F'],
+            'Domba'        => ['G','H'],
+            'Ayam Pedaging'=> ['I','J'],
+            'Ayam Buras'   => ['K','L'],
+            'Itik'         => ['M','N']
         ];
 
         for ($row = 4; $row <= $highestRow; $row++) {

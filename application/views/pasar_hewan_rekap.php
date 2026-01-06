@@ -79,6 +79,11 @@ thead th {
         <tr>
             <th rowspan="2">Kecamatan</th>
             <?php foreach($komoditas as $k): ?>
+                <?php if ($k == 'Sapi Potong') {
+                    $k = 'Sapi';
+                }else if ($k == 'Ayam Pedaging') {
+                    $k = 'Ayam Ras';
+                } ?>
                 <th colspan="2"><?= $k ?></th>
             <?php endforeach; ?>
         </tr>
