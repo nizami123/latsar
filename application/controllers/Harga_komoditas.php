@@ -403,13 +403,26 @@ class Harga_komoditas extends CI_Controller {
 
         // ===== RATA-RATA =====
         $sheet->setCellValue('A'.$rowNum, 'Rata-rata');
+
         foreach ($colHarga as $colIdx => $vals) {
-            $avg = count($vals) > 0 ? round(array_sum($vals) / count($vals), 2) : 0;
+            // buang nilai 0
+            $filteredVals = array_filter($vals, function ($v) {
+                return $v != 0;
+            });
+
+            $avg = count($filteredVals) > 0
+                ? round(array_sum($filteredVals) / count($filteredVals), 2)
+                : 0;
+
             $sheet->setCellValueByColumnAndRow($colIdx, $rowNum, $avg);
         }
+
         $sheet->getStyle("A{$rowNum}:{$lastCol}{$rowNum}")->applyFromArray([
-            'font'=>['bold'=>true],
-            'fill'=>['type'=>PHPExcel_Style_Fill::FILL_SOLID, 'color'=>['rgb'=>'D9D9D9']]
+            'font' => ['bold' => true],
+            'fill' => [
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'color' => ['rgb' => 'D9D9D9']
+            ]
         ]);
 
         // ===== FORMAT ANGKA =====
