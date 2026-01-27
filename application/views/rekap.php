@@ -255,7 +255,9 @@
                                 $subtotal += $val;
                                 $totalPerKomoditasPopulasi[$kom][$jk][$umur] += $val;
                               ?>
-                              <td style="background-color:<?= $bg ?>;text-align:center;"><?= number_format($val) ?></td>
+                              <td style="background-color:<?= ($val < 0 ? 'red' : $bg) ?>; text-align:center;">
+                                <?= number_format($val) ?>
+                              </td>
                             <?php endforeach; ?>
                           <?php endforeach; ?>
                           <td style="background-color:<?= $bg ?>;text-align:center; font-weight:bold;"><?= number_format($subtotal) ?></td>
@@ -270,7 +272,9 @@
                                 $subtotal += $val;
                                 $totalPerKomoditasPopulasi[$kom][$jk] += $val;
                             ?>
-                            <td style="background-color:<?= $bg ?>;text-align:center;"><?= number_format($val) ?></td>
+                            <td style="background-color:<?= (number_format($val) < 0 ? 'red' : $bg) ?>; text-align:center;">
+                                <?= number_format($val) ?>
+                            </td>
                           <?php endforeach; ?>
                           <td style="background-color:<?= $bg ?>;text-align:center; font-weight:bold;"><?= number_format($subtotal) ?></td>
                         <?php endif; ?>
@@ -279,7 +283,9 @@
                             $val = isset($row[$kom]) ? (int)$row[$kom] : 0;
                             $totalPerKomoditasPopulasi[$kom] += $val;
                         ?>
-                        <td style="background-color:<?= $bg ?>;text-align:center;"><?= number_format($val) ?></td>
+                        <td style="background-color:<?= (number_format($val) < 0 ? 'red' : $bg) ?>; text-align:center;">
+                            <?= number_format($val) ?>
+                        </td>
                       <?php endif; ?>
                     <?php endforeach; ?>
                   </tr>
@@ -767,7 +773,10 @@ $(document).ready(function(){
                                     let val = parseInt(row[k]?.[jk]?.[umur] || 0);
                                     totalPerKomoditasPopulasi[k][jk][umur] += val;
                                     subtotal += val;
-                                    tbody += `<td style="background-color:${bgColor};text-align:center">${Number(val).toLocaleString()}</td>`;
+                                    tbody += `<td style="background-color:${val < 0 ? 'red' : bgColor};text-align:center">
+                                        ${Number(val).toLocaleString()}
+                                    </td>`;
+
                                 });
                             });
                             tbody += `<td style="background-color:${bgColor};text-align:center; font-weight:bold;">${Number(subtotal).toLocaleString()}</td>`;
@@ -777,14 +786,18 @@ $(document).ready(function(){
                                 let val = parseInt(Object.values(row[k]?.[jk] || {0:0})[0]);
                                 totalPerKomoditasPopulasi[k][jk] += val;
                                 subtotal += val;
-                                tbody += `<td style="background-color:${bgColor};text-align:center">${Number(val).toLocaleString()}</td>`;
+                                tbody += `<td style="background-color:${val < 0 ? 'red' : bgColor};text-align:center">
+                                        ${Number(val).toLocaleString()}
+                                    </td>`;
                             });
                             tbody += `<td style="background-color:${bgColor};text-align:center; font-weight:bold;">${Number(subtotal).toLocaleString()}</td>`;
                         }
                     } else {
                         let val = parseInt(row[k] || 0);
                         totalPerKomoditasPopulasi[k] += val;
-                        tbody += `<td style="background-color:${bgColor};text-align:center">${Number(val).toLocaleString()}</td>`;
+                        tbody += `<td style="background-color:${val < 0 ? 'red' : bgColor};text-align:center">
+                            ${Number(val).toLocaleString()}
+                        </td>`;
                     }
                 });
 
