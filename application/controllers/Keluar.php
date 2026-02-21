@@ -281,21 +281,35 @@ class Keluar extends CI_Controller {
         }
 
         $file = $_FILES['file_excel']['tmp_name'];
-        $file_ext  = pathinfo($_FILES['file_excel']['name'], PATHINFO_EXTENSION);
+        $file_ext = pathinfo($_FILES['file_excel']['name'], PATHINFO_EXTENSION);
+
         $nama_wilayah = preg_replace('/[^A-Za-z0-9_\-]/', '_', $kecamatan->nama_wilayah);
+        $bulan = str_pad($bulan, 2, '0', STR_PAD_LEFT);
         $nama_file = $nama_wilayah . '_' . $bulan . '_' . $tahun . '.' . $file_ext;
-        $upload_path = FCPATH . 'uploads/keluar/';
 
-        if (!is_dir($upload_path)) {
-            mkdir($upload_path, 0777, true);
+        $base_path = FCPATH . 'uploads/keluar/';
+        $year_path = $base_path . $tahun . '/';
+        $month_path = $year_path . $bulan . '/';
+
+        // buat folder tahun kalau belum ada
+        if (!is_dir($year_path)) {
+            mkdir($year_path, 0777, true);
         }
-        
-        $full_path = $upload_path . $nama_file;
 
+        // buat folder bulan kalau belum ada
+        if (!is_dir($month_path)) {
+            mkdir($month_path, 0777, true);
+        }
+
+        $full_path = $month_path . $nama_file;
+
+        // hapus file lama kalau ada
         if (file_exists($full_path)) {
             unlink($full_path);
         }
-        move_uploaded_file($file, $upload_path . $nama_file);
+
+        // upload file
+        move_uploaded_file($file, $full_path);
         
         require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
         $file = $full_path;
