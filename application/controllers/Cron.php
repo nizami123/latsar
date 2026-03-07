@@ -4,27 +4,35 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Cron extends CI_Controller {
 
     public function hitung_populasi($bulan,$tahun)
-    {
+{
+    $this->db->insert('log_cron',[
+        'proses'=>'START hitung populasi',
+        'bulan'=>$bulan,
+        'tahun'=>$tahun,
+        'waktu'=>date('Y-m-d H:i:s')
+    ]);
 
-        // log mulai
-        $this->db->insert('log_cron',[
-            'proses' => 'START hitung populasi',
-            'bulan' => $bulan,
-            'tahun' => $tahun,
-            'waktu' => date('Y-m-d H:i:s')
-        ]);
+    try{
 
-        // jalankan stored procedure
         $this->db->query("CALL sp_hitung_populasi_bulan('$bulan','$tahun')");
 
-        // log selesai
         $this->db->insert('log_cron',[
-            'proses' => 'END hitung populasi',
-            'bulan' => $bulan,
-            'tahun' => $tahun,
-            'waktu' => date('Y-m-d H:i:s')
+            'proses'=>'END hitung populasi',
+            'bulan'=>$bulan,
+            'tahun'=>$tahun,
+            'waktu'=>date('Y-m-d H:i:s')
+        ]);
+
+    }catch(Exception $e){
+
+        $this->db->insert('log_cron',[
+            'proses'=>'ERROR '.$e->getMessage(),
+            'bulan'=>$bulan,
+            'tahun'=>$tahun,
+            'waktu'=>date('Y-m-d H:i:s')
         ]);
 
     }
+}
 
 }
