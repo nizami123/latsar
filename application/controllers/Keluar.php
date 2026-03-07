@@ -403,7 +403,7 @@ class Keluar extends CI_Controller {
                 $this->Keluar_model->insert($data_insert);
             }
         }
-        exec("php index.php cron hitung_populasi $bulan $tahun > /dev/null 2>&1 &");
+        $this->db->query("CALL sp_hitung_populasi_bulan('".$bulan."', '".$tahun."', ".$wilayah.")");
         redirect('keluar');
     }
 
