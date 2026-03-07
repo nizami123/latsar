@@ -3,7 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Cron extends CI_Controller {
 
-    public function insert_populasi()
+    public function index()
 {
     set_time_limit(0); 
     try {
@@ -18,7 +18,7 @@ class Cron extends CI_Controller {
             'waktu'=>date('Y-m-d H:i:s')
         ]);
 
-        $this->db->query("CALL sp_rekap_populasi(?, ?)", [$bulan, $tahun]);
+        // $this->db->query("CALL sp_rekap_populasi(?, ?)", [$bulan, $tahun]);
 
         $error = $this->db->error();
         if ($error['code'] != 0) {
