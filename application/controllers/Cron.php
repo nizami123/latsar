@@ -11,6 +11,13 @@ class Cron extends CI_Controller {
         $bulan = date('m', strtotime('-1 month'));
         $tahun = date('Y', strtotime('-1 month'));
 
+        $this->db->insert('log_cron',[
+            'proses'=>'START CRON INSERT POPULASI',
+            'bulan'=>$bulan,
+            'tahun'=>$tahun,
+            'waktu'=>date('Y-m-d H:i:s')
+        ]);
+
         $this->db->query("CALL sp_rekap_populasi(?, ?)", [$bulan, $tahun]);
 
         $error = $this->db->error();
@@ -18,11 +25,25 @@ class Cron extends CI_Controller {
             throw new Exception($error['message']);
         }
 
+        $this->db->insert('log_cron',[
+            'proses'=>'END CRON INSERT POPULASI',
+            'bulan'=>$bulan,
+            'tahun'=>$tahun,
+            'waktu'=>date('Y-m-d H:i:s')
+        ]);
+
         echo "Berhasil insert populasi";
 
     } catch (Exception $e) {
 
         echo "Error: " . $e->getMessage();
+
+        $this->db->insert('log_cron',[
+            'proses'=>'ERROR CRON INSERT POPULASI: '.$e->getMessage(),
+            'bulan'=>$bulan,
+            'tahun'=>$tahun,
+            'waktu'=>date('Y-m-d H:i:s')
+        ]);
     }
 }
 }
