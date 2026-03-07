@@ -5,6 +5,7 @@ class Cron extends CI_Controller {
 
     public function insert_populasi()
 {
+    set_time_limit(0); 
     try {
 
         $bulan = date('m', strtotime('-1 month'));
