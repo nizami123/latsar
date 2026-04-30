@@ -109,6 +109,14 @@
                 <p>KELUAR</p>
             </a>
         </li>
+
+         <li class="nav-item">
+            <a href="<?= base_url('bidang/data/rtp') ?>" 
+              class="nav-link <?= ($this->uri->segment(3) == 'rtp') ? 'active' : '' ?>">
+                <i class="nav-icon fas fa-users"></i>
+                <p>RTP</p>
+            </a>
+        </li>
     <?php endif; ?>
 
 
@@ -214,6 +222,14 @@
             class="nav-link <?= ($this->uri->segment(1) == 'pemotongan') ? 'active' : '' ?>">
             <i class="nav-icon fas fa-cut"></i>
             <p>PEMOTONGAN</p>
+          </a>
+        </li>
+
+         <li class="nav-item">
+          <a href="<?= base_url('rtp') ?>" 
+            class="nav-link <?= ($this->uri->segment(1) == 'rtp') ? 'active' : '' ?>">
+            <i class="nav-icon fas fa-users"></i>
+            <p>RTP</p>
           </a>
         </li>
         <?php endif; ?>

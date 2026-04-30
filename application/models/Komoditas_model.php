@@ -43,6 +43,13 @@ class Komoditas_model extends CI_Model {
         return $this->db->get('master_komoditas')->result();
     }
 
+    public function getKomoditasRtp()
+    {
+        $this->db->where_not_in('jenis', ['Komoditas', 'Hasil Ternak']);
+        $this->db->order_by('urut', 'ASC');
+        return $this->db->get('master_komoditas')->result();
+    }
+
      public function getKomoditasPemotongan()
     {
         $this->db->where_not_in('jenis', ['Komoditas', 'Hasil Ternak']);

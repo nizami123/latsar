@@ -1,0 +1,358 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Rtp extends CI_Controller {
+
+    public function __construct() {
+        parent::__construct();
+        $this->load->model(['Rtp_model','Komoditas_model']);
+    }
+
+    public function index() {
+        $data['rtp'] = $this->Rtp_model->getAll();
+        $data['wilayah']  = $this->Komoditas_model->getKecamatan();
+        $data['komoditas'] = $this->Komoditas_model->getKomoditasRtp();
+        $data['title'] = "Data Rtp";
+        $data['filename'] = "data_rtp";
+        $data['js'] = 'rtp.js';
+        $this->load->view('templates/header');
+        $this->load->view('templates/navbar');
+        $this->load->view('rtp', $data);
+        $this->load->view('templates/footer', $data);
+    }
+
+    public function get_desa_by_kecamatan($kode)
+    {
+        $this->db->where('kode', $kode);
+        $desa = $this->db->get('master_desa')->result();
+
+        echo json_encode($desa);
+    }
+
+    public function getDesaByKecamatan()
+    {
+        $kode = $this->input->post('kode');
+        $desa = $this->db->get_where('master_desa', ['kode' => $kode])->result();
+        echo json_encode($desa);
+    }
+
+
+    public function save() {
+        $post = $this->input->post();
+        $this->db->where('kode', $post['id_wilayah']);
+        $wilayah = $this->db->get('master_wilayah')->row();
+        $data = [
+            'bulan' => $post['bulan'],
+            'tahun' => $post['tahun'],
+            'id_wilayah' => $wilayah->id_wilayah, 
+            'id_komoditas' => $post['id_komoditas'],
+            'jumlah' => $post['jumlah'],
+            'jenis_kelamin' => $post['jkel'],
+            'umur' => $post['umur'],
+            'kode_desa' => $post['kode_desa'],
+            'id_user' => $this->session->userdata('id_user')
+        ];
+        $this->Rtp_model->insert($data);
+        redirect('rtp');
+    }
+
+    public function update() {
+        $post = $this->input->post();
+
+        // Ambil id_wilayah dari master_wilayah berdasarkan kode (bukan id langsung)
+        $this->db->where('kode', $post['id_wilayah']);
+        $wilayah = $this->db->get('master_wilayah')->row();
+        
+        $data = [
+            'bulan'        => $post['bulan'],
+            'tahun'        => $post['tahun'],
+            'id_wilayah'   => $wilayah->id_wilayah,
+            'id_komoditas' => $post['id_komoditas'],
+            'jumlah'       => $post['jumlah'],
+            'kode_desa'    => $post['kode_desa'],
+            'id_user'      => $this->session->userdata('id_user')
+        ];
+
+        $this->Rtp_model->update($post['id_rtp'], $data);
+        redirect('rtp');
+    }
+
+
+    public function delete($id) {
+        $this->Rtp_model->delete($id);
+        redirect('rtp');
+    }
+
+    public function download_template() {
+        if ($this->session->userdata('jabatan') == 'Admin Kecamatan') {
+            $kec = $this->db->get_where('master_wilayah', [
+                'kode' => $this->session->userdata('kode')
+            ])->row();
+            $wilayah = $this->Komoditas_model->getDesa();
+            $header = 'DATA RTP KECAMATAN ' . strtoupper($kec->nama_wilayah);
+        } else {
+            $wilayah = $this->Komoditas_model->getKecamatan();
+            $header = 'DATA RTP KABUPATEN LAMONGAN';
+        }
+        $komoditas = $this->Komoditas_model->getKomoditasRtp();
+
+        require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
+        $objPHPExcel = new PHPExcel();
+        $sheet = $objPHPExcel->setActiveSheetIndex(0);
+        $sheet->setTitle('Rtp');
+
+        // ===== JUDUL UTAMA =====
+        $sheet->setCellValue('A1', $header);
+        // Sementara merge ke kolom lebar, nanti disesuaikan di bawah
+        $sheet->mergeCells('A1:Q1');
+        $sheet->getRowDimension('1')->setRowHeight(30);
+
+        $sheet->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 16],
+            'fill' => [
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'color' => ['rgb' => '305496'] // Biru tua elegan
+            ],
+            'alignment' => [
+                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+                'vertical'   => PHPExcel_Style_Alignment::VERTICAL_CENTER
+            ],
+            'borders' => [
+                'allborders' => ['style' => PHPExcel_Style_Border::BORDER_THIN]
+            ]
+        ]);
+
+        // ===== HEADER UTAMA (mulai baris ke-2) =====
+        if ($this->session->userdata('jabatan') == 'Admin Kecamatan') {
+            $sheet->setCellValue('A2', 'Desa');
+        } else {
+            $sheet->setCellValue('A2', 'Kecamatan');
+        }
+        $sheet->mergeCells('A2:A4');
+
+        $col = 'B';
+        foreach ($komoditas as $k) {
+            $nama = $k->nama_komoditas;
+            $sheet->setCellValue($col.'2', $nama);
+            $sheet->mergeCells($col.'2:'.$col.'4');
+            $col = $this->nextCol($col, 1);
+        }
+
+        // Update merge judul sesuai kolom terakhir
+        $lastCol = $sheet->getHighestColumn();
+        $sheet->mergeCells('A1:'.$lastCol.'1');
+
+        // ===== ISI DATA =====
+        $row = 5;
+        foreach ($wilayah as $w) {
+            if($this->session->userdata('jabatan') == 'Admin Kecamatan') {
+                $sheet->setCellValue('A'.$row, $w->nama_desa);
+            } else {
+                $sheet->setCellValue('A'.$row, $w->nama_wilayah);
+            }
+            $row++;
+        }
+
+        // ===== STYLING HEADER =====
+        $headerRange = 'A2:' . $sheet->getHighestColumn() . '4';
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+            'fill' => [
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'color' => ['rgb' => '1F497D']
+            ],
+            'alignment' => [
+                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+                'vertical'   => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+                'wrap'       => true
+            ],
+            'borders' => [
+                'allborders' => ['style' => PHPExcel_Style_Border::BORDER_THIN]
+            ]
+        ]);
+
+        // ===== LEBAR KOLOM =====
+        $sheet->getColumnDimension('A')->setWidth(20);
+        for ($c = 'B'; $c <= $sheet->getHighestColumn(); $c++) {
+            $sheet->getColumnDimension($c)->setWidth(10);
+        }
+
+        // ===== FREEZE HEADER =====
+        $sheet->freezePane('B5');
+
+        // ===== ZEBRA STRIPE =====
+        $lastColumn = $sheet->getHighestColumn();
+        $lastColumnIndex = PHPExcel_Cell::columnIndexFromString($lastColumn) - 1;
+
+        for ($i = 5; $i < $row; $i++) {
+            if ($i % 2 == 0) {
+                $endColumn = PHPExcel_Cell::stringFromColumnIndex($lastColumnIndex - 1);
+                $sheet->getStyle('A'.$i.':'.$endColumn.$i)
+                    ->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
+                    ->getStartColor()->setRGB('F2F2F2');
+            }
+        }
+
+        // ===== OUTPUT FILE =====
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="template_rtp.xlsx"');
+        header('Cache-Control: max-age=0');
+
+        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+        $objWriter->save('php://output');
+    }
+
+    private function nextCol($col, $n = 1) {
+        for ($i = 0; $i < $n; $i++) {
+            $col++;
+        }
+        return $col;
+    }
+
+    public function upload_excel() {
+        $bulan = $this->input->post('bulan');
+        $tahun = $this->input->post('tahun');
+        $kecamatan = $this->db->get_where('master_wilayah', [
+                        'kode' => $this->session->userdata('kode')
+                    ])->row();
+
+        $batas_bawah = strtotime('2025-10-01');
+        $input_date = strtotime($tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT) . '-01');
+
+        $now = strtotime(date('Y-m-01'));
+
+        // ❌ jika kurang dari Oktober 2025
+        if ($input_date < $batas_bawah) {
+            $this->session->set_flashdata('error', 'Bulan yang dimasukkan sudah dikunci.');
+            redirect('rtp');
+            return;
+        }
+
+        // ❌ jika lebih dari bulan sekarang
+        if ($input_date > $now) {
+            $this->session->set_flashdata('error', 'Bulan dan tahun tidak boleh melebihi bulan berjalan.');
+            redirect('rtp');
+            return;
+        }
+
+                $file = $_FILES['file_excel']['tmp_name'];
+        $file_ext = pathinfo($_FILES['file_excel']['name'], PATHINFO_EXTENSION);
+
+        $nama_wilayah = preg_replace('/[^A-Za-z0-9_\-]/', '_', $kecamatan->nama_wilayah);
+        $bulan = str_pad($bulan, 2, '0', STR_PAD_LEFT);
+        $nama_file = $nama_wilayah . '_' . $bulan . '_' . $tahun . '.' . $file_ext;
+
+        $base_path = FCPATH . 'uploads/rtp/';
+        $year_path = $base_path . $tahun . '/';
+        $month_path = $year_path . $bulan . '/';
+
+        // buat folder tahun kalau belum ada
+        if (!is_dir($year_path)) {
+            mkdir($year_path, 0777, true);
+        }
+
+        // buat folder bulan kalau belum ada
+        if (!is_dir($month_path)) {
+            mkdir($month_path, 0777, true);
+        }
+
+        $full_path = $month_path . $nama_file;
+
+        // hapus file lama kalau ada
+        if (file_exists($full_path)) {
+            unlink($full_path);
+        }
+
+        // upload file
+        move_uploaded_file($file, $full_path);
+        
+        require APPPATH . 'third_party/PHPExcel/Classes/PHPExcel.php';
+        $file = $full_path;
+
+        // Load file Excel
+        $objPHPExcel = PHPExcel_IOFactory::load($file);
+        $sheet = $objPHPExcel->getActiveSheet()->toArray(null, true, true, true);
+
+        // Ambil data master
+        $komoditas = $this->Komoditas_model->getKomoditasIndexed(); // nama => id
+        if ($this->session->userdata('jabatan') == 'Admin Kecamatan') {
+            $wilayah_master = $this->Komoditas_model->getDesaIndexed(); // nama => id
+        } else {
+            $wilayah_master = $this->Komoditas_model->getKecamatanIndexed(); // nama => id
+        }
+
+        // Ambil header
+        $headers = $sheet[2]; // nama komoditas
+        $jkel    = $sheet[3]; // jenis kelamin
+        $umur    = $sheet[4]; // umur
+
+        // Ambil data mulai baris ke-4, reindex array
+        $sheet_data = array_slice($sheet, 4);
+
+        $this->db->where('bulan', $bulan);
+        $this->db->where('tahun', $tahun);
+        $this->db->where('id_wilayah', $kecamatan->id_wilayah);
+        $this->db->delete('trx_rtp');
+
+        foreach ($sheet_data as $row) {
+            $nama_wilayah = trim($row['A']);
+            if (empty($nama_wilayah)) continue;
+
+            $id_wilayah = $wilayah_master[$nama_wilayah] ?? null;
+            if (!$id_wilayah) continue;
+
+            foreach ($headers as $col => $komod) {
+                if ($col == 'A') continue;
+
+                $id_komoditas = $komoditas[$komod] ?? null;
+                $jenis_kelamin = null;
+                $umur_value = null;
+
+                if (!$id_komoditas) continue;
+
+                // Logika Admin Kecamatan vs Admin Pusat
+                if ($this->session->userdata('jabatan') == 'Admin Kecamatan') {
+                    $kecamatan = $this->db->get_where('master_wilayah', [
+                        'kode' => $this->session->userdata('kode')
+                    ])->row();
+                    $wilayah = $kecamatan->id_wilayah;
+                    $kode    = $id_wilayah; // kode desa
+                } else {
+                    $wilayah = $id_wilayah;
+                    $kode    = null;
+                }
+
+                // Ambil jumlah
+                $jumlah = isset($row[$col]) ? (int) preg_replace('/[^\d]/', '', $row[$col]) : 0;
+                
+
+                // Siapkan data untuk insert
+                $data_insert = [
+                    'bulan'         => $bulan,
+                    'tahun'         => $tahun,
+                    'id_komoditas'  => $id_komoditas,
+                    'jumlah'        => $jumlah,
+                    'id_wilayah'    => $wilayah,
+                    'id_user'       => $this->session->userdata('id_user'),
+                    'jenis_kelamin' => $jenis_kelamin,
+                    'kode_desa'     => $kode,
+                    'umur'          => $umur_value,
+                ];
+                $this->Rtp_model->insert($data_insert);
+            }
+        }
+        // $this->db->query("CALL sp_hitung_populasi_bulan('".$bulan."', '".$tahun."', ".$wilayah.")");
+        redirect('rtp');
+    }
+
+    public function delete_multiple()
+    {
+        $ids = $this->input->post('id_rtp');
+        if($ids) {
+            $this->db->where_in('id_rtp', $ids);
+            $this->db->delete('trx_rtp');
+        }
+        redirect('rtp');
+    }
+
+}
