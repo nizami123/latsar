@@ -40,7 +40,16 @@
           </a>
         </li>
 
-         <li class="nav-item">
+        <?php endif; ?>
+        <li class="nav-item">
+            <a href="<?= base_url('bidang/data/rtp') ?>" 
+              class="nav-link <?= ($this->uri->segment(3) == 'rtp') ? 'active' : '' ?>">
+                <i class="nav-icon fas fa-users"></i>
+                <p>Rekap RTP</p>
+            </a>
+        </li>
+
+        <li class="nav-item">
           <a href="<?= base_url('pasar_hewan/rekap') ?>" 
             class="nav-link <?= 
                 ($this->uri->segment(1) == 'pasar_hewan' && $this->uri->segment(2) == 'rekap')
@@ -51,7 +60,6 @@
             <p>Rekap Pasar Hewan</p>
           </a>
         </li>
-        <?php endif; ?>
 
       <?php if ($this->session->userdata('jabatan') == 'Bidang' || $this->session->userdata('jabatan') == 'Admin Dinas'): ?>
         <li class="nav-header">REKAP BIDANG</li>
@@ -107,14 +115,6 @@
               class="nav-link <?= ($this->uri->segment(3) == 'keluar') ? 'active' : '' ?>">
                 <i class="nav-icon fas fa-arrow-left"></i>
                 <p>KELUAR</p>
-            </a>
-        </li>
-
-         <li class="nav-item">
-            <a href="<?= base_url('bidang/data/rtp') ?>" 
-              class="nav-link <?= ($this->uri->segment(3) == 'rtp') ? 'active' : '' ?>">
-                <i class="nav-icon fas fa-users"></i>
-                <p>RTP</p>
             </a>
         </li>
     <?php endif; ?>
