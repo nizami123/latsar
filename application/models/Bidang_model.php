@@ -39,9 +39,7 @@ class Bidang_model extends CI_Model {
                 'p.umur'
             ]);
             $this->db->order_by('k.urut', 'ASC');
-
         } else {
-
             // TIDAK pilih kecamatan → tampil per kecamatan seperti awal
             $this->db->select('
                 w.nama_wilayah AS kecamatan,

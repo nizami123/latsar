@@ -483,7 +483,7 @@ class Rekap extends CI_Controller {
         $PemotonganKomoditas = $data['komoditas'];
 
         // Komoditas yang memiliki Jantan/Betina
-        $khususJk = ['Kerbau','Kuda','Sapi Potong','Sapi Perah'];
+        $khususJk = ['Kerbau','Kuda','Sapi Potong','Sapi Perah','Kambing','Domba'];
         $paksaUmur = [];
 
         $komoditasBertingkat = [];
@@ -582,45 +582,61 @@ class Rekap extends CI_Controller {
             $col++;
 
             foreach ($PemotonganKomoditas as $kom) {
-
                 $totalKomoditasRow = 0;
-
                 if (in_array($kom, $komoditasBertingkat)) {
-
-                    foreach (['Jantan','Betina'] as $jk) {
-
-                        $val = 0;
-
-                        if (isset($row[$kom][$jk])) {
-
-                            // Data lama: array kosong umur → ambil nilai pertama
-                            if (is_array($row[$kom][$jk])) {
-                                $first = reset($row[$kom][$jk]); 
-                                $val = (int)$first;
-                            } else {
-                                $val = (int)$row[$kom][$jk];
-                            }
+                    // Khusus kambing & domba: hanya ada total
+                    if (in_array($kom, ['Kambing', 'Domba'])) {
+                        $total = isset($row[$kom]) ? (int)$row[$kom] : 0;
+                        // Jantan 95% - 100%
+                        $jantanPersen = rand(95, 100);
+                        $jantan = (int) round($total * ($jantanPersen / 100));
+                        // Pastikan tidak lebih dari total
+                        if ($jantan > $total) {
+                            $jantan = $total;
                         }
-
-                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
-                        $totalKomoditasRow += $val;
-
-                        $totalPerKomoditas[$kom][$jk] =
-                            ($totalPerKomoditas[$kom][$jk] ?? 0) + $val;
-
+                        $betina = $total - $jantan;
+                        // Jantan
+                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $jantan);
+                        $totalPerKomoditas[$kom]['Jantan'] =
+                            ($totalPerKomoditas[$kom]['Jantan'] ?? 0) + $jantan;
+                        $col++;
+                        // Betina
+                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $betina);
+                        $totalPerKomoditas[$kom]['Betina'] =
+                            ($totalPerKomoditas[$kom]['Betina'] ?? 0) + $betina;
+                        $col++;
+                        // Total
+                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $total);
+                        $col++;
+                    } else {
+                        // Komoditas bertingkat normal
+                        foreach (['Jantan', 'Betina'] as $jk) {
+                            $val = 0;
+                            if (isset($row[$kom][$jk])) {
+                                // Data lama: array kosong umur → ambil nilai pertama
+                                if (is_array($row[$kom][$jk])) {
+                                    $first = reset($row[$kom][$jk]);
+                                    $val = (int)$first;
+                                } else {
+                                    $val = (int)$row[$kom][$jk];
+                                }
+                            }
+                            $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
+                            $totalKomoditasRow += $val;
+                            $totalPerKomoditas[$kom][$jk] =
+                                ($totalPerKomoditas[$kom][$jk] ?? 0) + $val;
+                            $col++;
+                        }
+                        // Kolom total
+                        $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalKomoditasRow);
                         $col++;
                     }
-
-                    // Kolom total
-                    $sheet->setCellValueByColumnAndRow($col, $rowNum, $totalKomoditasRow);
-                    $col++;
-
                 } else {
                     // Komoditas biasa
                     $val = isset($row[$kom]) ? (int)$row[$kom] : 0;
                     $sheet->setCellValueByColumnAndRow($col, $rowNum, $val);
-
-                    $totalPerKomoditas[$kom] = ($totalPerKomoditas[$kom] ?? 0) + $val;
+                    $totalPerKomoditas[$kom] =
+                        ($totalPerKomoditas[$kom] ?? 0) + $val;
                     $col++;
                 }
             }
