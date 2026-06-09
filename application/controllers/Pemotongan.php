@@ -303,15 +303,19 @@ class Pemotongan extends CI_Controller {
                 if (in_array($col, ['B','C'])) {
                     $id_komoditas = $komoditas['Sapi Potong'] ?? null;
                     $jenis_kelamin = $jkel[$col] ?? null;
+                    $umur_value = 'Dewasa';
                 } elseif (in_array($col, ['D','E'])) {
                     $id_komoditas = $komoditas['Sapi Perah'] ?? null;
                     $jenis_kelamin = $jkel[$col] ?? null;
+                    $umur_value = 'Dewasa';
                 } elseif (in_array($col, ['F','G'])) {
                     $id_komoditas = $komoditas['Kerbau'] ?? null;
                     $jenis_kelamin = $jkel[$col] ?? null;
+                    $umur_value = 'Dewasa';
                 } elseif (in_array($col, ['H','I'])) {
                     $id_komoditas = $komoditas['Kuda'] ?? null;
                     $jenis_kelamin = $jkel[$col] ?? null;
+                    $umur_value = 'Dewasa';
                 }
 
                 if (!$id_komoditas) continue;
