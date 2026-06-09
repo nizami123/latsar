@@ -345,6 +345,7 @@ class Pemotongan extends CI_Controller {
                     'id_wilayah'    => $wilayah,
                     'id_user'       => $this->session->userdata('id_user'),
                     'jenis_kelamin' => $jenis_kelamin,
+                    'umur'          => $umur_value,
                     'kode_desa'     => $kode,
                 ];
                 $this->Pemotongan_model->insert($data_insert);
