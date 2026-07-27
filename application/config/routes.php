@@ -52,3 +52,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $route['default_controller'] = 'auth';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
+$route['pengaduan'] = 'pengaduan';
+$route['pengaduan/simpan'] = 'pengaduan/simpan';
+$route['pengaduan/sukses'] = 'pengaduan/sukses';
