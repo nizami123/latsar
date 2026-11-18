@@ -307,6 +307,7 @@ class Pasar_hewan extends CI_Controller {
         $result = $this->Pasar_hewan_model->get_pivot_data($bulan, $tahun, $kecamatan);
         $data = [
             'kecamatan' => $this->Komoditas_model->getKecamatan(),
+            'desa'      => $this->Pasar_hewan_model->get_desa_ada_data($bulan, $tahun),
             'title'     => "Rekap Pasar Hewan",
             'filename'  => "data_rekap_pasar_hewan",
             'bulan'     => $bulan,
@@ -326,13 +327,25 @@ class Pasar_hewan extends CI_Controller {
         $bulan     = $this->input->get('bulan');
         $tahun     = $this->input->get('tahun');
         $kecamatan = $this->input->get('kecamatan'); // boleh kosong
+        $desa      = $this->input->get('desa');      // boleh kosong
 
-        $result = $this->Pasar_hewan_model->get_pivot_data($bulan, $tahun, $kecamatan);
+        $result = $this->Pasar_hewan_model->get_pivot_data($bulan, $tahun, $kecamatan, $desa);
         $data = [
             'komoditas' => $result['komoditas'],
             'pivot'     => $result['data']
         ];
        
         echo json_encode($data);
+    }
+
+    // Daftar desa yang ada datanya (untuk dropdown filter)
+    public function desa_data()
+    {
+        $bulan     = $this->input->get('bulan');
+        $tahun     = $this->input->get('tahun');
+        $kecamatan = $this->input->get('kecamatan'); // boleh kosong
+
+        $desa = $this->Pasar_hewan_model->get_desa_ada_data($bulan, $tahun, $kecamatan);
+        echo json_encode($desa);
     }
 }

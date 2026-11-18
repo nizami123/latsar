@@ -42,6 +42,14 @@ thead th {
     <h3 class="card-title">Rekap Pasar Hewan</h3>
 
     <div class="ml-auto form-inline">
+        <select id="filterDesa" class="form-control form-control-sm mr-2">
+            <option value="">Semua Desa</option>
+            <?php foreach($desa as $d): ?>
+                <option value="<?= $d->kode_desa ?>" data-kec="<?= $d->kode ?>">
+                    <?= $d->nama_desa ?> (<?= $d->nama_wilayah ?>)
+                </option>
+            <?php endforeach; ?>
+        </select>
         <select id="filterKecamatan" class="form-control form-control-sm mr-2">
             <option value="">Semua Kecamatan</option>
             <?php foreach($kecamatan as $k): ?>
@@ -77,7 +85,7 @@ thead th {
 <table id="tblHarga" class="table table-bordered table-sm">
     <thead>
         <tr>
-            <th rowspan="2">Kecamatan</th>
+            <th rowspan="2" id="thWilayah">Kecamatan</th>
             <?php foreach($komoditas as $k): ?>
                 <?php if ($k == 'Sapi Potong') {
                     $k = 'Sapi';
@@ -156,8 +164,34 @@ thead th {
 <script>
 $(document).ready(function () {
 
+    // isi ulang dropdown desa -> hanya desa yang ada datanya
+    function loadDesa() {
+        $.getJSON("<?= base_url('pasar_hewan/desa_data') ?>", {
+            bulan: $('#filterBulan').val(),
+            tahun: $('#filterTahun').val(),
+            kecamatan: $('#filterKecamatan').val()
+        }, function (res) {
+            let sel = $('#filterDesa');
+            let old = sel.val();
+            sel.empty().append('<option value="">Semua Desa</option>');
+            $.each(res, function (i, d) {
+                sel.append($('<option>').val(d.kode_desa).attr('data-kec', d.kode)
+                    .text(d.nama_desa + ' (' + d.nama_wilayah + ')'));
+            });
+            sel.val(old); // pertahankan pilihan jika masih ada datanya
+        });
+    }
+
+    $('#filterKecamatan').on('change', function () { $('#filterDesa').val(''); loadDesa(); });
+    $('#filterBulan, #filterTahun').on('change', loadDesa);
+    $('#filterDesa').on('change', function () {
+        let kec = $(this).find(':selected').data('kec');
+        if (kec) { $('#filterKecamatan').val(kec); } // samakan kecamatan dengan desa terpilih
+    });
+
     $('#btnFilter').on('click', function () {
         let kecamatan = $('#filterKecamatan').val();
+        let desa      = $('#filterDesa').val();
         let bulan     = $('#filterBulan').val();
         let tahun     = $('#filterTahun').val();
 
@@ -167,11 +201,13 @@ $(document).ready(function () {
             dataType: "json",
             data: {
                 kecamatan: kecamatan,
+                desa: desa,
                 bulan: bulan,
                 tahun: tahun
             },
             success: function (res) {
                 let html = '';
+                $('#thWilayah').text((kecamatan || desa) ? 'Desa' : 'Kecamatan');
                 let footer = `<tr><th><strong>Total</strong></th>`;
 
                 // total per komoditas

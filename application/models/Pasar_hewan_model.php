@@ -39,9 +39,12 @@ class Pasar_hewan_model extends CI_Model {
         $this->db->insert('trx_pasar_hewan', $data);
     }
 
-    public function get_pivot_data($bulan, $tahun, $kecamatan = null)
+    public function get_pivot_data($bulan, $tahun, $kecamatan = null, $desa = null)
     {
-        if (!empty($kecamatan)) {
+        // filter kecamatan / desa -> tampil per desa
+        $per_desa = (!empty($kecamatan) || !empty($desa));
+
+        if ($per_desa) {
 
             $this->db->select('
                 d.nama_desa AS kecamatan,
@@ -55,7 +58,12 @@ class Pasar_hewan_model extends CI_Model {
             $this->db->join('master_komoditas k','p.id_komoditas=k.id_komoditas');
             $this->db->where('p.bulan', $bulan);
             $this->db->where('p.tahun', $tahun);
-            $this->db->where('d.kode', $kecamatan);
+            if (!empty($kecamatan)) {
+                $this->db->where('d.kode', $kecamatan);
+            }
+            if (!empty($desa)) {
+                $this->db->where('p.kode_desa', $desa);
+            }
             $this->db->group_by(['d.nama_desa','k.nama_komoditas','p.status_pasar','d.kode_desa']);
             $this->db->order_by('d.kode_desa','ASC');
             $this->db->order_by('k.urut','ASC');
@@ -96,6 +104,17 @@ class Pasar_hewan_model extends CI_Model {
             $pivot[$r['kecamatan']]['urut'] = $r['urut'];
         }
 
+        // per desa: buang desa yang semua angkanya 0 (hanya tampilkan yang ada datanya)
+        if ($per_desa) {
+            foreach ($pivot as $nama => $v) {
+                $total = 0;
+                foreach ($v as $item) {
+                    if (is_array($item)) { $total += array_sum($item); }
+                }
+                if ($total == 0) { unset($pivot[$nama]); }
+            }
+        }
+
         uasort($pivot, function($a, $b){
             return ($a['urut'] ?? 0) <=> ($b['urut'] ?? 0);
         });
@@ -106,6 +125,27 @@ class Pasar_hewan_model extends CI_Model {
         ];
     }
 
+
+    /**
+     * Daftar desa yang ada datanya (jumlah > 0) pada bulan & tahun tertentu
+     */
+    public function get_desa_ada_data($bulan, $tahun, $kecamatan = null)
+    {
+        $this->db->select('d.kode_desa, d.nama_desa, d.kode, w.nama_wilayah');
+        $this->db->from('trx_pasar_hewan p');
+        $this->db->join('master_desa d', 'p.kode_desa = d.kode_desa');
+        $this->db->join('master_wilayah w', 'w.kode = d.kode');
+        $this->db->where('p.bulan', $bulan);
+        $this->db->where('p.tahun', $tahun);
+        if (!empty($kecamatan)) {
+            $this->db->where('d.kode', $kecamatan);
+        }
+        $this->db->group_by(['d.kode_desa', 'd.nama_desa', 'd.kode', 'w.nama_wilayah', 'w.urut']);
+        $this->db->having('SUM(p.jumlah) > 0');
+        $this->db->order_by('w.urut', 'ASC');
+        $this->db->order_by('d.nama_desa', 'ASC');
+        return $this->db->get()->result();
+    }
 
     /**
      * Total per komoditas (Masuk / Laku)
