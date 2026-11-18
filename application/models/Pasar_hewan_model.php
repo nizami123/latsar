@@ -39,113 +39,77 @@ class Pasar_hewan_model extends CI_Model {
         $this->db->insert('trx_pasar_hewan', $data);
     }
 
-    public function get_pivot_data($bulan, $tahun, $kecamatan = null, $desa = null)
+    /**
+     * Rekap per kecamatan + desa.
+     * - Data dari Admin Kecamatan punya kode_desa  -> 1 baris per desa (hanya yang ada datanya)
+     * - Data dari Admin Dinas tanpa kode_desa      -> 1 baris per kecamatan, desa "-"
+     */
+    public function get_pivot_data($bulan, $tahun, $kecamatan = null)
     {
-        // filter kecamatan / desa -> tampil per desa
-        $per_desa = (!empty($kecamatan) || !empty($desa));
-
-        if ($per_desa) {
-
-            $this->db->select('
-                d.nama_desa AS kecamatan,
-                k.nama_komoditas,
-                p.status_pasar,
-                SUM(p.jumlah) AS jumlah,
-                d.kode_desa AS urut
-            ');
-            $this->db->from('trx_pasar_hewan p');
-            $this->db->join('master_desa d','p.kode_desa=d.kode_desa');
-            $this->db->join('master_komoditas k','p.id_komoditas=k.id_komoditas');
-            $this->db->where('p.bulan', $bulan);
-            $this->db->where('p.tahun', $tahun);
-            if (!empty($kecamatan)) {
-                $this->db->where('d.kode', $kecamatan);
-            }
-            if (!empty($desa)) {
-                $this->db->where('p.kode_desa', $desa);
-            }
-            $this->db->group_by(['d.nama_desa','k.nama_komoditas','p.status_pasar','d.kode_desa']);
-            $this->db->order_by('d.kode_desa','ASC');
-            $this->db->order_by('k.urut','ASC');
-
-        } else {
-
-            $this->db->select('
-                w.nama_wilayah AS kecamatan,
-                k.nama_komoditas,
-                p.status_pasar,
-                SUM(p.jumlah) AS jumlah,
-                w.urut
-            ');
-            $this->db->from('trx_pasar_hewan p');
-            $this->db->join('master_wilayah w','p.id_wilayah=w.id_wilayah');
-            $this->db->join('master_komoditas k','p.id_komoditas=k.id_komoditas');
-            $this->db->where('p.bulan', $bulan);
-            $this->db->where('p.tahun', $tahun);
-            $this->db->group_by(['w.nama_wilayah','k.nama_komoditas','p.status_pasar','w.urut']);
-            $this->db->order_by('w.urut','ASC');
-            $this->db->order_by('k.urut','ASC');
+        $this->db->select('
+            w.nama_wilayah AS kecamatan,
+            w.urut,
+            p.kode_desa,
+            d.nama_desa AS desa,
+            k.nama_komoditas,
+            k.urut AS urut_komoditas,
+            p.status_pasar,
+            SUM(p.jumlah) AS jumlah
+        ');
+        $this->db->from('trx_pasar_hewan p');
+        $this->db->join('master_wilayah w', 'p.id_wilayah = w.id_wilayah');
+        $this->db->join('master_komoditas k', 'p.id_komoditas = k.id_komoditas');
+        $this->db->join('master_desa d', 'p.kode_desa = d.kode_desa', 'left');
+        $this->db->where('p.bulan', $bulan);
+        $this->db->where('p.tahun', $tahun);
+        if (!empty($kecamatan)) {
+            $this->db->where('w.kode', $kecamatan);
         }
+        $this->db->group_by(['w.nama_wilayah', 'w.urut', 'p.kode_desa', 'd.nama_desa', 'k.nama_komoditas', 'k.urut', 'p.status_pasar']);
+        $this->db->order_by('w.urut', 'ASC');
+        $this->db->order_by('p.kode_desa', 'ASC');
+        $this->db->order_by('k.urut', 'ASC');
 
         $rows = $this->db->get()->result_array();
 
         // =====================
-        // PIVOT SESUAI VIEW
+        // PIVOT: 1 baris = kecamatan + desa
         // =====================
         $pivot = [];
         $komoditas = [];
 
         foreach ($rows as $r) {
-            if (!in_array($r['nama_komoditas'], $komoditas)) {
-                $komoditas[] = $r['nama_komoditas'];
-            }
+            $komoditas[$r['nama_komoditas']] = (int)$r['urut_komoditas'];
 
-            $pivot[$r['kecamatan']][$r['nama_komoditas']][$r['status_pasar']] = (int)$r['jumlah'];
-            $pivot[$r['kecamatan']]['urut'] = $r['urut'];
+            $key = $r['kecamatan'] . '|' . $r['kode_desa'];
+            if (!isset($pivot[$key])) {
+                $pivot[$key] = [
+                    'kecamatan' => $r['kecamatan'],
+                    'desa'      => !empty($r['desa']) ? $r['desa'] : '-',
+                    'kode_desa' => $r['kode_desa'],
+                    'total'     => 0,
+                    'data'      => []
+                ];
+            }
+            $pivot[$key]['data'][$r['nama_komoditas']][$r['status_pasar']] = (int)$r['jumlah'];
+            $pivot[$key]['total'] += (int)$r['jumlah'];
         }
 
-        // per desa: buang desa yang semua angkanya 0 (hanya tampilkan yang ada datanya)
-        if ($per_desa) {
-            foreach ($pivot as $nama => $v) {
-                $total = 0;
-                foreach ($v as $item) {
-                    if (is_array($item)) { $total += array_sum($item); }
-                }
-                if ($total == 0) { unset($pivot[$nama]); }
+        // desa yang semua angkanya 0 tidak ditampilkan (hanya yang ada datanya)
+        foreach ($pivot as $key => $v) {
+            if (!empty($v['kode_desa']) && $v['total'] == 0) {
+                unset($pivot[$key]);
             }
         }
 
-        uasort($pivot, function($a, $b){
-            return ($a['urut'] ?? 0) <=> ($b['urut'] ?? 0);
-        });
+        asort($komoditas);
 
         return [
-            'komoditas' => $komoditas,
-            'data'      => $pivot
+            'komoditas' => array_keys($komoditas),
+            'data'      => array_values($pivot)
         ];
     }
 
-
-    /**
-     * Daftar desa yang ada datanya (jumlah > 0) pada bulan & tahun tertentu
-     */
-    public function get_desa_ada_data($bulan, $tahun, $kecamatan = null)
-    {
-        $this->db->select('d.kode_desa, d.nama_desa, d.kode, w.nama_wilayah');
-        $this->db->from('trx_pasar_hewan p');
-        $this->db->join('master_desa d', 'p.kode_desa = d.kode_desa');
-        $this->db->join('master_wilayah w', 'w.kode = d.kode');
-        $this->db->where('p.bulan', $bulan);
-        $this->db->where('p.tahun', $tahun);
-        if (!empty($kecamatan)) {
-            $this->db->where('d.kode', $kecamatan);
-        }
-        $this->db->group_by(['d.kode_desa', 'd.nama_desa', 'd.kode', 'w.nama_wilayah', 'w.urut']);
-        $this->db->having('SUM(p.jumlah) > 0');
-        $this->db->order_by('w.urut', 'ASC');
-        $this->db->order_by('d.nama_desa', 'ASC');
-        return $this->db->get()->result();
-    }
 
     /**
      * Total per komoditas (Masuk / Laku)
