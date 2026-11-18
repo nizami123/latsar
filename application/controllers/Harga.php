@@ -13,8 +13,9 @@ class Harga extends CI_Controller {
 
     public function index()
     {
-        $data['harga'] = $this->Harga_model->get_all();
-        $data['title'] = "Data Komoditas";
+        $data['kolom'] = $this->Harga_model->get_kolom_harga();
+        $data['harga'] = $this->Harga_model->get_pivot($data['kolom']);
+        $data['title'] = "Harga Komoditas";
         $data['js'] = 'harga.js';
         $data['filename'] = "data_komoditas";
         $this->load->view('templates/header');
@@ -64,6 +65,12 @@ class Harga extends CI_Controller {
         $this->load->view('templates/navbar');
         $this->load->view('harga/form', $data);
         $this->load->view('templates/footer', $data);
+    }
+
+    public function delete_tanggal($tanggal)
+    {
+        $this->Harga_model->delete_by_tanggal($tanggal);
+        redirect('harga');
     }
 
     public function delete($id)
@@ -169,9 +176,10 @@ class Harga extends CI_Controller {
 
     public function delete_multiple()
     {
-        $ids = $this->input->post('id_harga');
-        if($ids) {
-            $this->db->where_in('id_harga', $ids);
+        // Tabel harga dipivot per tanggal, jadi nilai checkbox = tanggal (bukan id_harga)
+        $tanggal = $this->input->post('id_harga');
+        if($tanggal) {
+            $this->db->where_in('tanggal', $tanggal);
             $this->db->delete('trx_harga');
         }
         redirect('harga');

@@ -16,36 +16,42 @@
     <div class="container-fluid">
       <div class="card">
         <div class="card-body">
-          <table id="example1" class="table table-bordered table-striped">
+          <table id="example1" class="table table-bordered table-striped text-center">
             <thead>
               <tr>
-                <th style="width: 5%; text-align: center;">
+                <th style="width: 5%;">
                   <div class="custom-checkbox">
                     <input type="checkbox" id="checkAll">
                     <label for="checkAll"></label>
                   </div>
                 </th>
                 <th>Tanggal</th>
-                <th>Komoditas</th>
-                <th>Harga</th>
+                <?php foreach($kolom as $k): ?>
+                <th><?= $k->nama_komoditas ?></th>
+                <?php endforeach; ?>
                 <th style="width: 15%">Aksi</th>
               </tr>
             </thead>
             <tbody>
               <?php foreach($harga as $row): ?>
               <tr>
-                <td style="text-align: center;">
+                <td>
                   <div class="custom-checkbox">
-                    <input type="checkbox" class="checkItem" id="cb<?= $row->id_harga ?>" value="<?= $row->id_harga ?>">
-                    <label for="cb<?= $row->id_harga ?>"></label>
+                    <input type="checkbox" class="checkItem" id="cb<?= $row['tanggal'] ?>" value="<?= $row['tanggal'] ?>">
+                    <label for="cb<?= $row['tanggal'] ?>"></label>
                   </div>
                 </td>
-                <td><?= date('d-m-Y', strtotime($row->tanggal)) ?></td>
-                <td><?= $row->nama_komoditas ?></td>
-                <td><?= number_format($row->harga, 0, ',', '.') ?></td>
+                <td data-order="<?= $row['tanggal'] ?>"><?= date('d/m/Y', strtotime($row['tanggal'])) ?></td>
+                <?php foreach($kolom as $k): ?>
+                <td class="text-right">
+                  <?= isset($row['harga'][$k->id_komoditas]) ? number_format($row['harga'][$k->id_komoditas], 0, ',', '.') : '-' ?>
+                </td>
+                <?php endforeach; ?>
                 <td>
-                  <a href="<?= site_url('harga/edit/'.$row->id_harga) ?>" class="btn btn-warning btn-sm">Edit</a>
-                  <a href="<?= site_url('harga/delete/'.$row->id_harga) ?>" class="btn btn-danger btn-sm" onclick="return confirm('Hapus data ini?')">Hapus</a>
+                  <a href="<?= site_url('harga/upload_web/'.$row['tanggal']) ?>" class="btn btn-success btn-sm"
+                     onclick="return confirm('Upload harga tanggal <?= date('d/m/Y', strtotime($row['tanggal'])) ?> ke web?')">Upload</a>
+                  <a href="<?= site_url('harga/delete_tanggal/'.$row['tanggal']) ?>" class="btn btn-danger btn-sm"
+                     onclick="return confirm('Hapus semua harga tanggal ini?')">Hapus</a>
                 </td>
               </tr>
               <?php endforeach; ?>

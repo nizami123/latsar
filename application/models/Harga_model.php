@@ -35,6 +35,50 @@ class Harga_model extends CI_Model {
         return $row ? $row->last_date : null;
     }
 
+    // Daftar kolom komoditas harga (urutan = urutan kolom di tabel)
+    public function get_kolom_harga()
+    {
+        $nama = ['Sapi','Daging Sapi','Ayam Broiler','Karkas Ayam Broiler','Telur Ayam Ras (P)','Telur Ayam Ras (K)'];
+        $rows = $this->db->where_in('nama_komoditas', $nama)
+                         ->where('jenis', 'Komoditas')
+                         ->where('created_by', 0)
+                         ->get('master_komoditas')->result();
+        $by_name = [];
+        foreach ($rows as $r) { $by_name[$r->nama_komoditas] = $r; }
+
+        $kolom = [];
+        foreach ($nama as $n) {
+            if (isset($by_name[$n])) { $kolom[] = $by_name[$n]; }
+        }
+        return $kolom;
+    }
+
+    // Pivot: 1 baris per tanggal, 1 kolom per komoditas
+    public function get_pivot($kolom)
+    {
+        if (empty($kolom)) { return []; }
+        $ids = array_map(function($k){ return $k->id_komoditas; }, $kolom);
+
+        $rows = $this->db->select('tanggal, id_komoditas, harga')
+                         ->where_in('id_komoditas', $ids)
+                         ->order_by('tanggal', 'DESC')
+                         ->get('trx_harga')->result();
+
+        $pivot = [];
+        foreach ($rows as $r) {
+            if (!isset($pivot[$r->tanggal])) {
+                $pivot[$r->tanggal] = ['tanggal' => $r->tanggal, 'harga' => []];
+            }
+            $pivot[$r->tanggal]['harga'][$r->id_komoditas] = $r->harga;
+        }
+        return array_values($pivot);
+    }
+
+    public function delete_by_tanggal($tanggal)
+    {
+        return $this->db->delete('trx_harga', ['tanggal' => $tanggal]);
+    }
+
     public function get_by_id($id)
     {
         return $this->db->get_where('trx_harga', ['id_harga' => $id])->row();
